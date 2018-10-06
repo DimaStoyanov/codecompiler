@@ -5,6 +5,7 @@ import tsystems.tchallenge.codecompiler.domain.repositories.CodeCompilationResul
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.lang.ClassLoader.getSystemResource;
@@ -22,8 +23,9 @@ public class CodeCompilationManager {
                                   DockerCompilationManager dockerCompilationManager) throws Exception{
         this.codeCompilationResultRepository = codeCompilationResultRepository;
         this.dockerCompilationManager = dockerCompilationManager;
+        Path java = Paths.get(getSystemResource("languages/java/code/Main.java").toURI());
         DockerCompilationResult output =
-                this.dockerCompilationManager.compileFile(JAVA, Paths.get(getSystemResource("java").toURI()));
+                this.dockerCompilationManager.compileFile(JAVA, java);
         System.out.println(output);
     }
 

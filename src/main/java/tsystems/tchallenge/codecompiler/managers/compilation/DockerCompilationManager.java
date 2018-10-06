@@ -1,6 +1,7 @@
 package tsystems.tchallenge.codecompiler.managers.compilation;
 
 import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.DockerClient.BuildParam;
 import com.spotify.docker.client.DockerClient.LogsParam;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -8,35 +9,32 @@ import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.HostConfig;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.DockerCompilationResult;
-import tsystems.tchallenge.codecompiler.api.dto.IdAware;
-import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
 
+import static com.spotify.docker.client.DockerClient.BuildParam.create;
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
 import static com.spotify.docker.client.messages.HostConfig.Bind.from;
 import static java.lang.ClassLoader.getSystemResource;
+import static java.net.URLEncoder.encode;
 
 @Service
 public class DockerCompilationManager {
 
 
     private final String codeSuffix = "/code";
+    private final String compileSuffix = "/compilation";
+
     private final DockerClient docker;
-    private Map<CodeLanguage, String> imageByLanguage;
 
 
     @Autowired
@@ -44,23 +42,14 @@ public class DockerCompilationManager {
         this.docker = docker;
     }
 
-    @PostConstruct
-    public void init() {
 
-        imageByLanguage = Arrays.stream(CodeLanguage.values())
-                .parallel()
-                .map(c -> Pair.of(c, getSystemResource(c.toString().toLowerCase())))
-                .map(this::toPath)
-                .map(this::buildImage)
-                .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+    public DockerCompilationResult compileFile(CodeLanguage language, Path file) throws Exception {
+        Path languageDir = getLanguageDir(language);
+        HostConfig hostConfig = getHostConfig(languageDir);
 
-    }
-
-
-    public DockerCompilationResult compileFile(CodeLanguage language, Path directory) throws Exception {
         final ContainerConfig containerConfig = ContainerConfig.builder()
-                .hostConfig(getHostConfig(directory))
-                .image(imageByLanguage.get(language))
+                .hostConfig(hostConfig)
+                .image(createImage(language, file))
                 .build();
 
         ContainerCreation creation = docker.createContainer(containerConfig);
@@ -93,30 +82,44 @@ public class DockerCompilationManager {
 
     }
 
-    private Pair<CodeLanguage, Path> toPath(Pair<CodeLanguage, URL> pair) {
+    private String createImage(CodeLanguage language, Path path) {
+        Path dockerFileDir = getDockerfileDir(language);
+        String fileName = path.getFileName().toString();
         try {
-            return Pair.of(pair.getFirst(), Paths.get(pair.getSecond().toURI()));
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Resource directory not found", e);
-        }
-    }
+            String buildArgs = "{\"file_name\":\"" + fileName + "\"}";
+            BuildParam buildParam = create("buildargs", encode(buildArgs, "UTF-8"));
+            return docker.build(dockerFileDir ,buildParam);
 
-    private Pair<CodeLanguage, String> buildImage(Pair<CodeLanguage, Path> pair) {
-        try {
-            return Pair.of(pair.getFirst(), docker.build(pair.getSecond()));
         } catch (DockerException | InterruptedException | IOException e) {
             throw new IllegalStateException("Can not build docker image");
         }
     }
 
 
-    private HostConfig getHostConfig(Path path) {
+
+
+    private HostConfig getHostConfig(Path langDir) {
         return HostConfig.builder()
-                .appendBinds(from(path.toAbsolutePath() + codeSuffix)
+                .appendBinds(from(langDir.toAbsolutePath() + codeSuffix)
                         .to(codeSuffix)
                         .readOnly(false)
                         .build())
                 .build();
+    }
+
+
+    private Path getDockerfileDir(CodeLanguage language) {
+        Path languageDir = getLanguageDir(language);
+        return Paths.get(languageDir.toAbsolutePath() + compileSuffix);
+    }
+
+    private Path getLanguageDir(CodeLanguage language) {
+        URL systemResource = getSystemResource("languages/" + language.toString().toLowerCase());
+        try {
+            return Paths.get(systemResource.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Resource directory not found", e);
+        }
     }
 
 }
