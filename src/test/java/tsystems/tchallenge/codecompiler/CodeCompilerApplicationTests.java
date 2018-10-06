@@ -1,4 +1,4 @@
-package com.codecompiler.codecompiler;
+package tsystems.tchallenge.codecompiler;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
