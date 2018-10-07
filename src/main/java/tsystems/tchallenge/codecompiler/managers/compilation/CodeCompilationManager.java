@@ -2,16 +2,17 @@ package tsystems.tchallenge.codecompiler.managers.compilation;
 
 import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
 import tsystems.tchallenge.codecompiler.api.dto.CodeSubmissionInvoice;
-import tsystems.tchallenge.codecompiler.api.dto.DockerCompilationResult;
+import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.converters.CodeCompilationResultConverter;
 import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationStatus;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.domain.repositories.CodeCompilationResultRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager;
 import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
@@ -21,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.volumeWritable;
+import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.COMPILATION;
 import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder.internal;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_COMPILATION_RESULT;
@@ -31,17 +34,17 @@ public class CodeCompilationManager {
 
 
     private final CodeCompilationResultRepository codeCompilationResultRepository;
-    private final DockerCompilationManager dockerCompilationManager;
+    private final DockerContainerManager dockerContainerManager;
     private final ResourceManager resourceManager;
     private final CodeCompilationResultConverter codeCompilationResultConverter;
 
     @Autowired
     public CodeCompilationManager(CodeCompilationResultRepository codeCompilationResultRepository,
-                                  DockerCompilationManager dockerCompilationManager,
+                                  DockerContainerManager dockerContainerManager,
                                   ResourceManager resourceManager,
                                   CodeCompilationResultConverter codeCompilationResultConverter) {
         this.codeCompilationResultRepository = codeCompilationResultRepository;
-        this.dockerCompilationManager = dockerCompilationManager;
+        this.dockerContainerManager = dockerContainerManager;
         this.resourceManager = resourceManager;
         this.codeCompilationResultConverter = codeCompilationResultConverter;
     }
@@ -49,17 +52,20 @@ public class CodeCompilationManager {
 
     public CodeCompilationResultDto compileFile(CodeSubmissionInvoice invoice) {
         invoice.validate();
-        Path path = copyToFile(invoice);
+        Path fileToCompile = copyToFile(invoice);
+        Path workDir = fileToCompile.getParent();
 
-        DockerCompilationResult dockerCompilationResult;
+        ContainerExecutionResult containerExecutionResult;
         try {
-            dockerCompilationResult = dockerCompilationManager.compileFile(invoice.getLanguage(), path);
-            log.info("Compilation result: " + dockerCompilationResult);
+            containerExecutionResult = dockerContainerManager
+                    .startContainer(workDir, COMPILATION, volumeWritable());
+            log.info("Compilation result: " + containerExecutionResult);
         } catch (Exception e) {
             throw internal(invoice, e);
         }
 
-        CodeCompilationResult result = buildResult(invoice.getLanguage(), path, dockerCompilationResult);
+        CodeCompilationResult result = buildResult(invoice.getLanguage(), fileToCompile,
+                containerExecutionResult);
         codeCompilationResultRepository.save(result);
         log.info(result);
         return codeCompilationResultConverter.toDto(result);
@@ -72,10 +78,10 @@ public class CodeCompilationManager {
     }
 
     private CodeCompilationResult buildResult(CodeLanguage language, Path fileToCompile,
-                                              DockerCompilationResult result) {
+                                              ContainerExecutionResult result) {
         CodeCompilationStatus status;
 
-        if (!Strings.isNullOrEmpty(result.getStderr())) {
+        if (result.getExitCode() != 0) {
             status = CodeCompilationStatus.COMPILATION_ERROR;
         } else {
             status = CodeCompilationStatus.OK;
@@ -91,7 +97,6 @@ public class CodeCompilationManager {
                 .cmpErr(result.getStderr())
                 .status(status)
                 .language(language)
-                .languageName(language.name)
                 .compiledFilePath(compiledFilePath)
                 .build();
     }

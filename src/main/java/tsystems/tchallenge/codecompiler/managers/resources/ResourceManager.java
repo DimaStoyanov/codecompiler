@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -24,6 +25,8 @@ public class ResourceManager {
     public static final Charset UTF8 = Charset.forName("UTF-8");
     public final String codeSuffix = "/code";
     public final String languagesDirName = "languages";
+    public final String inputFileName = "input.txt";
+    public final String outputFileName = "output.txt";
 
     public Path getDockerfileDir(CodeLanguage language, DockerfileType dockerfileType) {
         Path languageDir = getLanguageDir(language);
@@ -77,11 +80,43 @@ public class ResourceManager {
 
     }
 
+    public Path createInputFile(String workDirPath) {
+
+        Path inputFile = Paths.get(workDirPath + "/" + inputFileName);
+        try {
+            Files.createFile(inputFile);
+        } catch (IOException e) {
+            throw internal(e);
+        }
+        return inputFile;
+    }
+
+    public String getInputPath(String workDirPath) {
+        return workDirPath + "/" + inputFileName;
+    }
+
+    public String getOutputPath(String workDirPath) {
+        return workDirPath + "/" + outputFileName;
+    }
+
+    public String readOutputFileIfAvailable(String workDirPath) {
+        Path outputFile = Paths.get(getOutputPath(workDirPath));
+
+        if (!Files.isRegularFile(outputFile)) {
+            return null;
+        }
+        try {
+            return new String(Files.readAllBytes(outputFile));
+        } catch (IOException e) {
+            throw internal(e);
+        }
+    }
+
     public String getCompiledFilePath(CodeLanguage language, Path fileToCompilePath) {
         String baseName = FilenameUtils.getBaseName(fileToCompilePath.toAbsolutePath().toString());
-        String submissionDirName = fileToCompilePath.getParent().getFileName().toString();
-        return getSubmissionDirPath(language, submissionDirName)
-                + "/" + baseName + "." + language.compiledExt;
+        String workDirPath = fileToCompilePath.getParent().toAbsolutePath().toString();
+        String fileName = baseName + "." + language.compiledExt;
+        return workDirPath + "/" + fileName;
     }
 
     public void validateFileExists(String path) {
@@ -93,6 +128,11 @@ public class ResourceManager {
                     .attachment(path)
                     .build();
         }
+    }
+
+
+    public String getWorkDirPath(String codeFilePath) {
+        return Paths.get(codeFilePath).getParent().toAbsolutePath().toString();
     }
 
     private String getBaseFileName(CodeLanguage language) {

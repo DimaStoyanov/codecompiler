@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "code-submissions")
 public class CodeCompilationResult extends AbstractDocument{
     private CodeLanguage language;
-    private String languageName;
     private CodeCompilationStatus status;
     private String cmpErr;
     private String compiledFilePath;

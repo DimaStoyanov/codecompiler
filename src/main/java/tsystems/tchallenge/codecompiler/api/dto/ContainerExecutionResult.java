@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class DockerCompilationResult {
+public class ContainerExecutionResult {
     private String stdout;
     private String stderr;
     private Long exitCode;

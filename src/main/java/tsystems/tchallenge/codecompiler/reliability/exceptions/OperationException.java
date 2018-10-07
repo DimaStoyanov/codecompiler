@@ -2,6 +2,7 @@ package tsystems.tchallenge.codecompiler.reliability.exceptions;
 
 import com.google.common.base.Strings;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.http.HttpStatus;
 
 @Data
