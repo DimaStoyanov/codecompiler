@@ -4,6 +4,8 @@ public enum CodeLanguage {
     JAVA("java", "class", "Java 8u171",
             "Submission should be in 1 file (1 public class).\n" +
             "Public class should have name \"Main\".\n" +
+                    "Main class must have main method with signature " +
+                    "\"public static void main(String[] args)\" " +
             "No external dependencies (via maven, gradle, e.t.c) supported (at least now)");
 
     public final String ext;
