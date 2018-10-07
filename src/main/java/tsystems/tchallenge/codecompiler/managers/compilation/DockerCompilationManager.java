@@ -1,7 +1,6 @@
 package tsystems.tchallenge.codecompiler.managers.compilation;
 
 import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.DockerClient.BuildParam;
 import com.spotify.docker.client.DockerClient.LogsParam;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.exceptions.DockerException;
@@ -12,19 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.DockerCompilationResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
-import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
 import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.spotify.docker.client.DockerClient.BuildParam.create;
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
 import static com.spotify.docker.client.messages.HostConfig.Bind.from;
-import static java.net.URLEncoder.encode;
 import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.COMPILATION;
-import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 
 @Service
 public class DockerCompilationManager {
@@ -41,12 +36,12 @@ public class DockerCompilationManager {
     }
 
 
-    public DockerCompilationResult compileFile(CodeLanguage language, Path file) throws Exception {
-        HostConfig hostConfig = getHostConfig(language);
+    public DockerCompilationResult compileFile(CodeLanguage language, Path fileToCompile) throws Exception {
+        HostConfig hostConfig = getHostConfig(language, fileToCompile);
 
         final ContainerConfig containerConfig = ContainerConfig.builder()
                 .hostConfig(hostConfig)
-                .image(createImage(language, file))
+                .image(createImage(language))
                 .build();
 
         ContainerCreation creation = docker.createContainer(containerConfig);
@@ -79,13 +74,10 @@ public class DockerCompilationManager {
 
     }
 
-    private String createImage(CodeLanguage language, Path fileToCompile) {
+    private String createImage(CodeLanguage language) {
         Path dockerFileDir = resourceManager.getDockerfileDir(language, COMPILATION);
-        String fileName = fileToCompile.getFileName().toString();
         try {
-            String buildArgs = "{\"file_name\":\"" + fileName + "\"}";
-            BuildParam buildParam = create("buildargs", encode(buildArgs, UTF8.toString()));
-            return docker.build(dockerFileDir, buildParam);
+            return docker.build(dockerFileDir);
 
         } catch (DockerException | InterruptedException | IOException e) {
             throw new IllegalStateException("Can not build docker image");
@@ -93,9 +85,11 @@ public class DockerCompilationManager {
     }
 
 
-    private HostConfig getHostConfig(CodeLanguage language) {
+    // Create bind between container file system and host file system (see docker volumes)
+    private HostConfig getHostConfig(CodeLanguage language, Path file) {
+        String submissionDir = file.getParent().getFileName().toString();
         return HostConfig.builder()
-                .appendBinds(from(resourceManager.getCodeDirPath(language))
+                .appendBinds(from(resourceManager.getSubmissionDirPath(language, submissionDir))
                         .to(resourceManager.codeSuffix)
                         .readOnly(false)
                         .build())

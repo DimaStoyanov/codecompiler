@@ -1,11 +1,9 @@
 package tsystems.tchallenge.codecompiler.managers.resources;
 
-import org.apache.commons.compress.compressors.FileNameUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
-import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -25,7 +23,7 @@ public class ResourceManager {
 
     public static final Charset UTF8 = Charset.forName("UTF-8");
     public final String codeSuffix = "/code";
-    private final String submissionFilePrefix = "submission";
+    public final String languagesDirName = "languages";
 
     public Path getDockerfileDir(CodeLanguage language, DockerfileType dockerfileType) {
         Path languageDir = getLanguageDir(language);
@@ -33,7 +31,8 @@ public class ResourceManager {
     }
 
     public Path getLanguageDir(CodeLanguage language) {
-        URL systemResource = getSystemResource("languages/" + language.toString().toLowerCase());
+        URL systemResource = getSystemResource(languagesDirName + "/" +
+                language.toString().toLowerCase());
         try {
             return Paths.get(systemResource.toURI());
         } catch (URISyntaxException e) {
@@ -53,12 +52,23 @@ public class ResourceManager {
                 .toString();
     }
 
+    public Path getSubmissionDir(CodeLanguage language, String submissionDirName) {
+        return Paths.get(getCodeDirPath(language) + "/" + submissionDirName);
+    }
+
+    public String getSubmissionDirPath(CodeLanguage language, String submissionDirName) {
+        return getSubmissionDir(language, submissionDirName)
+                .toAbsolutePath()
+                .toString();
+    }
+
     public Path createCodeFile(CodeLanguage language) {
-        String codeDirPath = getCodeDirPath(language);
-        String fileName = submissionFilePrefix + UUID.randomUUID().toString() + "." + language.ext;
-        Path path = Paths.get(codeDirPath + "/" + fileName);
+        String submissionDirPath = getSubmissionDirPath(language, UUID.randomUUID().toString());
+        String fileName = getBaseFileName(language) + "." + language.ext;
+        Path path = Paths.get(submissionDirPath + "/" + fileName);
 
         try {
+            Files.createDirectories(Paths.get(submissionDirPath));
             Files.createFile(path);
         } catch (IOException e) {
             throw internal(e);
@@ -69,9 +79,9 @@ public class ResourceManager {
 
     public String getCompiledFilePath(CodeLanguage language, Path fileToCompilePath) {
         String baseName = FilenameUtils.getBaseName(fileToCompilePath.toAbsolutePath().toString());
-        String filePath = getCodeDirPath(language) + "/" + baseName + "."  + language.compiledExt;
-        Path path = Paths.get(filePath);
-        return path.toAbsolutePath().toString();
+        String submissionDirName = fileToCompilePath.getParent().getFileName().toString();
+        return getSubmissionDirPath(language, submissionDirName)
+                + "/" + baseName + "." + language.compiledExt;
     }
 
     public void validateFileExists(String path) {
@@ -83,5 +93,12 @@ public class ResourceManager {
                     .attachment(path)
                     .build();
         }
+    }
+
+    private String getBaseFileName(CodeLanguage language) {
+        if (language == CodeLanguage.JAVA) {
+            return "Main";
+        }
+        throw new UnsupportedOperationException("language " + language + " not supported");
     }
 }

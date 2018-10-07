@@ -47,5 +47,9 @@ dependencies {
     compile 'io.springfox:springfox-swagger2:2.9.2'
     compile 'io.springfox:springfox-swagger-ui:2.9.2'
     compile "org.mapstruct:mapstruct-jdk8:${mapstructVersion}"
+//    apt 'org.mapstruct:mapstruct-processor:1.2.0.Final'
+
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
 }

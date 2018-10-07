@@ -1,5 +1,9 @@
 package tsystems.tchallenge.codecompiler.reliability.exceptions;
 
+import org.springframework.http.HttpStatus;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_INTERNAL;
 
 public class OperationExceptionBuilder {
@@ -29,7 +33,8 @@ public class OperationExceptionBuilder {
     }
 
     public static OperationException internal(Object attachment, Exception cause) {
-        return new OperationException(ERR_INTERNAL, "Internal server error", attachment, cause);
+        return new OperationException(ERR_INTERNAL, "Internal server error", attachment, cause,
+                INTERNAL_SERVER_ERROR);
     }
 
     public OperationExceptionBuilder type(OperationExceptionType type) {
@@ -53,7 +58,16 @@ public class OperationExceptionBuilder {
     }
 
     public OperationException build() {
-        return new OperationException(type, description, attachment, cause);
+        HttpStatus status = null;
+        switch (type) {
+            case ERR_INTERNAL:
+                status = INTERNAL_SERVER_ERROR;
+                break;
+            case ERR_COMPILATION_RESULT:
+                status = BAD_REQUEST;
+                break;
+        }
+        return new OperationException(type, description, attachment, cause, status);
     }
 
 }
