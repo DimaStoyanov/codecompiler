@@ -23,6 +23,11 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    mapstructVersion = "1.2.0.Final"
+    lombokVersion = "1.18.0"
+}
+
 
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter-data-mongodb')
@@ -35,11 +40,12 @@ dependencies {
     testImplementation('de.flapdoodle.embed:de.flapdoodle.embed.mongo')
     testImplementation('org.springframework.security:spring-security-test')
     compile 'com.spotify:docker-client:8.14.0'
-//    compile group: 'com.github.docker-java', name: 'docker-java', version: '3.0.14'
     compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.26'
     compile group: 'org.glassfish.jersey.core', name: 'jersey-common', version: '2.26'
     compile group: 'org.glassfish.jersey.bundles.repackaged', name: 'jersey-guava', version: '2.25.1'
     compile group: 'com.google.guava', name: 'guava', version: '26.0-jre'
     compile 'io.springfox:springfox-swagger2:2.9.2'
     compile 'io.springfox:springfox-swagger-ui:2.9.2'
+    compile "org.mapstruct:mapstruct-jdk8:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 }

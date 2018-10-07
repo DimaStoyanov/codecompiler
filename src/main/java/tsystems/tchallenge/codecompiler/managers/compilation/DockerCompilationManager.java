@@ -12,40 +12,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.DockerCompilationResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
+import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
+import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static com.spotify.docker.client.DockerClient.BuildParam.create;
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
 import static com.spotify.docker.client.messages.HostConfig.Bind.from;
-import static java.lang.ClassLoader.getSystemResource;
 import static java.net.URLEncoder.encode;
+import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.COMPILATION;
+import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 
 @Service
 public class DockerCompilationManager {
 
 
-    private final String codeSuffix = "/code";
-    private final String compileSuffix = "/compilation";
 
     private final DockerClient docker;
-
+    private final ResourceManager resourceManager;
 
     @Autowired
-    public DockerCompilationManager(DockerClient docker) {
+    public DockerCompilationManager(DockerClient docker, ResourceManager resourceManager) {
         this.docker = docker;
+        this.resourceManager = resourceManager;
     }
 
 
     public DockerCompilationResult compileFile(CodeLanguage language, Path file) throws Exception {
-        Path languageDir = getLanguageDir(language);
-        HostConfig hostConfig = getHostConfig(languageDir);
+        HostConfig hostConfig = getHostConfig(language);
 
         final ContainerConfig containerConfig = ContainerConfig.builder()
                 .hostConfig(hostConfig)
@@ -82,13 +79,13 @@ public class DockerCompilationManager {
 
     }
 
-    private String createImage(CodeLanguage language, Path path) {
-        Path dockerFileDir = getDockerfileDir(language);
-        String fileName = path.getFileName().toString();
+    private String createImage(CodeLanguage language, Path fileToCompile) {
+        Path dockerFileDir = resourceManager.getDockerfileDir(language, COMPILATION);
+        String fileName = fileToCompile.getFileName().toString();
         try {
             String buildArgs = "{\"file_name\":\"" + fileName + "\"}";
-            BuildParam buildParam = create("buildargs", encode(buildArgs, "UTF-8"));
-            return docker.build(dockerFileDir ,buildParam);
+            BuildParam buildParam = create("buildargs", encode(buildArgs, UTF8.toString()));
+            return docker.build(dockerFileDir, buildParam);
 
         } catch (DockerException | InterruptedException | IOException e) {
             throw new IllegalStateException("Can not build docker image");
@@ -96,30 +93,13 @@ public class DockerCompilationManager {
     }
 
 
-
-
-    private HostConfig getHostConfig(Path langDir) {
+    private HostConfig getHostConfig(CodeLanguage language) {
         return HostConfig.builder()
-                .appendBinds(from(langDir.toAbsolutePath() + codeSuffix)
-                        .to(codeSuffix)
+                .appendBinds(from(resourceManager.getCodeDirPath(language))
+                        .to(resourceManager.codeSuffix)
                         .readOnly(false)
                         .build())
                 .build();
-    }
-
-
-    private Path getDockerfileDir(CodeLanguage language) {
-        Path languageDir = getLanguageDir(language);
-        return Paths.get(languageDir.toAbsolutePath() + compileSuffix);
-    }
-
-    private Path getLanguageDir(CodeLanguage language) {
-        URL systemResource = getSystemResource("languages/" + language.toString().toLowerCase());
-        try {
-            return Paths.get(systemResource.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Resource directory not found", e);
-        }
     }
 
 }

@@ -1,16 +1,30 @@
 package tsystems.tchallenge.codecompiler.reliability.exceptions;
 
+import com.google.common.base.Strings;
+
 public class OperationException extends RuntimeException {
-    private OperationExceptionType type;
-    private String details;
-    private String name;
-    private Object attachment;
-    private Exception cause;
+    private final OperationExceptionType type;
+    private final String description;
+    private final Object attachment;
+    private final Exception cause;
+
+    OperationException(OperationExceptionType type, String description,
+                              Object attachment, Exception cause) {
+        this.type = type;
+        this.description = description;
+        this.attachment = attachment;
+        this.cause = cause;
+    }
 
 
     @Override
     public String getMessage() {
-        return details;
+        String description = Strings.isNullOrEmpty(this.description) ?
+                "No description available" : this.description;
+        if (attachment != null) {
+            description += "\nAttachment: " + attachment;
+        }
+        return description;
     }
 
     @Override
