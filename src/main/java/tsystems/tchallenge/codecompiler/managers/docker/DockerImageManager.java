@@ -61,7 +61,7 @@ public class DockerImageManager {
             return docker.build(dockerFileDir);
 
         } catch (DockerException | InterruptedException | IOException e) {
-            throw new IllegalStateException("Can not build docker image");
+            throw new IllegalStateException("Can not build docker image", e);
         }
     }
 

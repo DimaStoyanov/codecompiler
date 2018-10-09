@@ -20,8 +20,12 @@ Code compiler
     In that case **current user should have access to docker**  
     (you can check it by evaluating command `docker info` without `sudo`)
 
+### API
+You can try using api with Swagger UI.   
+Just run server and visit `localhost:8080/swagger-ui.html`
 
-### Usage example
+### Usage  example 
+
 1. Retrieve list of available languages  
     ```
     curl -X GET "http://localhost:8080/languages/" -H "accept: */*"
