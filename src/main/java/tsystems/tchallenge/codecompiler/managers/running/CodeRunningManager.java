@@ -112,6 +112,7 @@ public class CodeRunningManager {
                 .input(invoice.getInput())
                 .time(result.getExecutionTime().toMillis())
                 .inputPath(inputPath)
+                .memory(result.getMemoryUsage())
                 .stderr(result.getStderr())
                 .languageName(compilationResult.getLanguage().name)
                 .build();

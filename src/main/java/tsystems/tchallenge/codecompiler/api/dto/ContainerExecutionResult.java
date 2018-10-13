@@ -13,5 +13,5 @@ public class ContainerExecutionResult {
     private Duration executionTime;
     private Long exitCode;
     private Boolean oomKilled;
-
+    private Long memoryUsage;
 }

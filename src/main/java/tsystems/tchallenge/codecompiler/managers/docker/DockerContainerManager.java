@@ -62,17 +62,17 @@ public class DockerContainerManager {
         docker.startContainer(id);
 
         killIfTimeLimitExceeds(id, optionsState.millis);
+        Long memUsage = docker.stats(id).memoryStats().maxUsage();
         docker.waitContainer(id);
 
-        return buildResult(id);
+        return buildResult(id, memUsage);
     }
 
-    private ContainerExecutionResult buildResult(String id) throws Exception {
+    private ContainerExecutionResult buildResult(String id, Long memUsage) throws Exception {
 
         String stdout = collectLogs(id, stdout());
         String stderr = collectLogs(id, stderr());
         ContainerState state = docker.inspectContainer(id).state();
-        ContainerStats stats = docker.stats(id);
         Long exitCode = state.exitCode();
         Duration executionTime = Duration.between(state.startedAt().toInstant(), Instant.now());
         return ContainerExecutionResult.builder()
@@ -81,6 +81,7 @@ public class DockerContainerManager {
                 .stderr(stderr)
                 .executionTime(executionTime)
                 .exitCode(exitCode)
+                .memoryUsage(memUsage)
                 .build();
 
     }
