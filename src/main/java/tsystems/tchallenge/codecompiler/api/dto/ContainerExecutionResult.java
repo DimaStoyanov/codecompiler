@@ -12,5 +12,6 @@ public class ContainerExecutionResult {
     private String stderr;
     private Duration executionTime;
     private Long exitCode;
+    private Boolean oomKilled;
 
 }

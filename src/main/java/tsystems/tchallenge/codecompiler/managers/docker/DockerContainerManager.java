@@ -49,7 +49,7 @@ public class DockerContainerManager {
 
         ContainerOptionsState optionsState = ContainerOptionsState.applyOptions(options);
         CodeLanguage language = languageByWorkDir(workDir);
-        HostConfig hostConfig = getHostConfig(workDir, optionsState.volumeReadOnly);
+        HostConfig hostConfig = getHostConfig(workDir, optionsState.bytes, optionsState.volumeReadOnly);
 
 
         final ContainerConfig containerConfig = ContainerConfig.builder()
@@ -72,10 +72,12 @@ public class DockerContainerManager {
         String stdout = collectLogs(id, stdout());
         String stderr = collectLogs(id, stderr());
         ContainerState state = docker.inspectContainer(id).state();
+        ContainerStats stats = docker.stats(id);
         Long exitCode = state.exitCode();
         Duration executionTime = Duration.between(state.startedAt().toInstant(), Instant.now());
         return ContainerExecutionResult.builder()
                 .stdout(stdout)
+                .oomKilled(state.oomKilled())
                 .stderr(stderr)
                 .executionTime(executionTime)
                 .exitCode(exitCode)
@@ -113,8 +115,10 @@ public class DockerContainerManager {
 
 
     // Create bind between container file system and host file system (see docker volumes)
-    private HostConfig getHostConfig(Path workDir, boolean readOnly) {
+    private HostConfig getHostConfig(Path workDir, Long memoryLimit, boolean readOnly) {
         return HostConfig.builder()
+                .memory(memoryLimit)
+                .memorySwappiness(0)
                 .appendBinds(from(workDir.toAbsolutePath().toString())
                         .to(resourceManager.codeSuffix)
                         .readOnly(readOnly)

@@ -8,6 +8,7 @@ public class CodeRunInvoice implements ValidationAware {
     private String submissionId;
     private String input;
     private Long executionTimeLimit;
+    private Long memoryLimit;
 
     @Override
     public void validate() {

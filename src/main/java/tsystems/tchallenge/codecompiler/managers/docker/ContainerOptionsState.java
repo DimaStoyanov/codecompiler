@@ -7,7 +7,7 @@ public class ContainerOptionsState {
 
     public boolean volumeReadOnly = true;
     public Long millis = 5_000L;
-    public Long kb = 256 * 1024L;
+    public Long bytes = 256 * 1024 * 1024L;
 
     private ContainerOptionsState() {
 
@@ -28,7 +28,7 @@ public class ContainerOptionsState {
                     state.volumeReadOnly = !(boolean) option.value;
                     break;
                 case MEMORY_LIMIT:
-                    state.kb = (Long) option.value;
+                    state.bytes = (Long) option.value;
                     break;
                 case TIME_LIMIT:
                     state.millis = (Long) option.value;

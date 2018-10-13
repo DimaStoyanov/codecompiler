@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
+import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.memoryLimit;
 import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.timeLimit;
 import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.volumeWritable;
 import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.RUNNING;
@@ -58,9 +59,7 @@ public class CodeRunningManager {
 
     public CodeRunResultDto runCode(CodeRunInvoice invoice) {
         invoice.validate();
-        if (invoice.getExecutionTimeLimit() == null) {
-            invoice.setExecutionTimeLimit(5_000L);
-        }
+        setDefaultsIfMissing(invoice);
 
 
         CodeCompilationResult compilationResult = codeCompilationResultRepository
@@ -76,7 +75,8 @@ public class CodeRunningManager {
         try {
             containerExecutionResult = dockerContainerManager
                     .startContainer(workDir, RUNNING, volumeWritable(),
-                            timeLimit(invoice.getExecutionTimeLimit()));
+                            timeLimit(invoice.getExecutionTimeLimit()),
+                            memoryLimit(invoice.getMemoryLimit()));
             log.info("Compilation result: " + containerExecutionResult);
         } catch (Exception e) {
             throw internal(invoice, e);
@@ -118,7 +118,11 @@ public class CodeRunningManager {
     }
 
     private CodeRunStatus status(ContainerExecutionResult result, CodeRunInvoice invoice) {
-        if (result.getExitCode() != 0) {
+        Long exitCode = result.getExitCode();
+        if (result.getOomKilled()) {
+            return CodeRunStatus.MEMORY_LIMIT;
+        }
+        if (exitCode != 0) {
             Duration timeLimit = Duration.of(invoice.getExecutionTimeLimit(), MILLIS);
             if (result.getExecutionTime().compareTo(timeLimit) >= 0) {
                 return CodeRunStatus.TIME_LIMIT;
@@ -142,6 +146,15 @@ public class CodeRunningManager {
     }
 
 
+    private void setDefaultsIfMissing(CodeRunInvoice invoice) {
+        if (invoice.getExecutionTimeLimit() == null) {
+            invoice.setExecutionTimeLimit(5_000L);
+        }
+
+        if (invoice.getMemoryLimit() == null) {
+            invoice.setMemoryLimit(256 * 1024 * 1024L);
+        }
+    }
 
 
 
