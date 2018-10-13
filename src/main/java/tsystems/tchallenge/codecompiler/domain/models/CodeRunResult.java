@@ -20,5 +20,5 @@ public class CodeRunResult extends AbstractDocument{
     private String output;
     private String stderr;
     private Long memory;
-    private String time;
+    private Long time;
 }

@@ -24,10 +24,6 @@ public class OperationExceptionBuilder {
         return internal(null, null);
     }
 
-    public static OperationException internal(Object attachment) {
-        return internal(attachment, null);
-    }
-
     public static OperationException internal(Exception cause) {
         return internal(null, cause);
     }

@@ -2,22 +2,27 @@ package tsystems.tchallenge.codecompiler.managers.docker;
 
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.LogStream;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.*;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
 import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
+import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
+import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
 import static com.spotify.docker.client.messages.HostConfig.Bind.from;
-import static tsystems.tchallenge.codecompiler.managers.docker.ContainerOption.VOLUME_READ_ONLY;
-import static tsystems.tchallenge.codecompiler.managers.docker.ContainerOption.VOLUME_WRITABLE;
+import static java.lang.Runtime.getRuntime;
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static tsystems.tchallenge.codecompiler.managers.docker.ContainerOption.*;
 
 @Service
 public class DockerContainerManager {
@@ -25,12 +30,17 @@ public class DockerContainerManager {
     private final DockerImageManager dockerImageManager;
     private final DockerClient docker;
     private final ResourceManager resourceManager;
+    private final ThreadPoolTaskScheduler scheduler;
 
     public DockerContainerManager(DockerImageManager dockerImageManager, DockerClient docker,
                                   ResourceManager resourceManager) {
         this.dockerImageManager = dockerImageManager;
         this.docker = docker;
         this.resourceManager = resourceManager;
+        this.scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(getRuntime().availableProcessors());
+        scheduler.initialize();
+
     }
 
     public ContainerExecutionResult startContainer(Path workDir, DockerfileType dockerfileType,
@@ -49,8 +59,9 @@ public class DockerContainerManager {
 
         ContainerCreation creation = docker.createContainer(containerConfig);
         String id = creation.id();
-
         docker.startContainer(id);
+
+        killIfTimeLimitExceeds(id, optionsState.millis);
         docker.waitContainer(id);
 
         return buildResult(id);
@@ -60,11 +71,13 @@ public class DockerContainerManager {
 
         String stdout = collectLogs(id, stdout());
         String stderr = collectLogs(id, stderr());
-        Long exitCode = docker.inspectContainer(id).state().exitCode();
-
+        ContainerState state = docker.inspectContainer(id).state();
+        Long exitCode = state.exitCode();
+        Duration executionTime = Duration.between(state.startedAt().toInstant(), Instant.now());
         return ContainerExecutionResult.builder()
                 .stdout(stdout)
                 .stderr(stderr)
+                .executionTime(executionTime)
                 .exitCode(exitCode)
                 .build();
 
@@ -74,6 +87,20 @@ public class DockerContainerManager {
         try (LogStream stream = docker.logs(id, params)) {
             return stream.readFully();
         }
+
+    }
+
+    private void killIfTimeLimitExceeds(String id, Long millis) {
+        scheduler.schedule(() -> {
+            try {
+                ContainerState containerState = docker.inspectContainer(id).state();
+                if (containerState.running() || containerState.paused()) {
+                    docker.killContainer(id);
+                }
+            } catch (Exception e) {
+                throw wrapped(e);
+            }
+        }, Instant.now().plus(millis, MILLIS));
 
     }
 
@@ -113,6 +140,18 @@ public class DockerContainerManager {
         public static Option volumeWritable() {
             return new Option(VOLUME_WRITABLE, true);
         }
+
+        public static Option timeLimit(Long milis) {
+            return new Option(TIME_LIMIT, milis);
+        }
+
+        public static Option memoryLimit(Long kb) {
+            return new Option(MEMORY_LIMIT, kb);
+        }
+    }
+
+    private OperationException wrapped(Exception e) {
+        return OperationExceptionBuilder.internal(e);
     }
 
 

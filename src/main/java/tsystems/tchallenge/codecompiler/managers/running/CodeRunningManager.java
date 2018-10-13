@@ -22,7 +22,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.timeLimit;
+import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.volumeWritable;
 import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.RUNNING;
 import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder.internal;
@@ -54,6 +58,11 @@ public class CodeRunningManager {
 
     public CodeRunResultDto runCode(CodeRunInvoice invoice) {
         invoice.validate();
+        if (invoice.getExecutionTimeLimit() == null) {
+            invoice.setExecutionTimeLimit(5_000L);
+        }
+
+
         CodeCompilationResult compilationResult = codeCompilationResultRepository
                 .findById(invoice.getSubmissionId())
                 .orElseThrow(() -> compilationResultNotFound(invoice.getSubmissionId()));
@@ -66,14 +75,14 @@ public class CodeRunningManager {
         ContainerExecutionResult containerExecutionResult;
         try {
             containerExecutionResult = dockerContainerManager
-                    .startContainer(workDir, RUNNING);
+                    .startContainer(workDir, RUNNING, volumeWritable(),
+                            timeLimit(invoice.getExecutionTimeLimit()));
             log.info("Compilation result: " + containerExecutionResult);
         } catch (Exception e) {
             throw internal(invoice, e);
         }
 
-        CodeRunResult result = buildResult(compilationResult, containerExecutionResult,
-                invoice.getInput());
+        CodeRunResult result = buildResult(compilationResult, containerExecutionResult, invoice);
         codeRunResultRepository.save(result);
         log.info(result);
         return codeRunResultConverter.toDto(result);
@@ -88,8 +97,8 @@ public class CodeRunningManager {
 
     private CodeRunResult buildResult(CodeCompilationResult compilationResult,
                                               ContainerExecutionResult result,
-                                              String input) {
-        CodeRunStatus status = status(result);
+                                              CodeRunInvoice invoice) {
+        CodeRunStatus status = status(result, invoice);
         String workDirPath = resourceManager.getWorkDirPath(compilationResult.getCompiledFilePath());
         String output = resourceManager.readOutputFileIfAvailable(workDirPath);
         output = output == null ? result.getStdout() : output;
@@ -100,15 +109,20 @@ public class CodeRunningManager {
                 .language(compilationResult.getLanguage())
                 .output(output)
                 .outputPath(resourceManager.getOutputPath(workDirPath))
-                .input(input)
+                .input(invoice.getInput())
+                .time(result.getExecutionTime().toMillis())
                 .inputPath(inputPath)
                 .stderr(result.getStderr())
                 .languageName(compilationResult.getLanguage().name)
                 .build();
     }
 
-    private CodeRunStatus status(ContainerExecutionResult result) {
+    private CodeRunStatus status(ContainerExecutionResult result, CodeRunInvoice invoice) {
         if (result.getExitCode() != 0) {
+            Duration timeLimit = Duration.of(invoice.getExecutionTimeLimit(), MILLIS);
+            if (result.getExecutionTime().compareTo(timeLimit) >= 0) {
+                return CodeRunStatus.TIME_LIMIT;
+            }
             return CodeRunStatus.RUNTIME_ERROR;
         } else {
             return CodeRunStatus.OK;
@@ -117,7 +131,8 @@ public class CodeRunningManager {
 
 
     private void attachInput(String compiledFilePath, String input) {
-        Path inputFile = resourceManager.createInputFile(compiledFilePath);
+        String workDirPath = resourceManager.getWorkDirPath(compiledFilePath);
+        Path inputFile = resourceManager.createInputFile(workDirPath);
 
         try (BufferedWriter writer = Files.newBufferedWriter(inputFile, UTF8)) {
             writer.write(input);
@@ -125,6 +140,8 @@ public class CodeRunningManager {
             throw internal(e);
         }
     }
+
+
 
 
 

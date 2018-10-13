@@ -84,7 +84,9 @@ public class ResourceManager {
 
         Path inputFile = Paths.get(workDirPath + "/" + inputFileName);
         try {
-            Files.createFile(inputFile);
+            if (!Files.exists(inputFile)) {
+                Files.createFile(inputFile);
+            }
         } catch (IOException e) {
             throw internal(e);
         }

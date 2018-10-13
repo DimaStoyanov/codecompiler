@@ -7,9 +7,9 @@ import tsystems.tchallenge.codecompiler.utils.ValidationAware;
 public class CodeRunInvoice implements ValidationAware {
     private String submissionId;
     private String input;
+    private Long executionTimeLimit;
 
     @Override
     public void validate() {
-
     }
 }
