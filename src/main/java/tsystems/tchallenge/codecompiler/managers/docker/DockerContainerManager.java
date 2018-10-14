@@ -2,8 +2,9 @@ package tsystems.tchallenge.codecompiler.managers.docker;
 
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.LogStream;
+import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.*;
-import org.springframework.scheduling.TaskScheduler;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
@@ -16,6 +17,8 @@ import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptio
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
@@ -25,6 +28,7 @@ import static java.time.temporal.ChronoUnit.MILLIS;
 import static tsystems.tchallenge.codecompiler.managers.docker.ContainerOption.*;
 
 @Service
+@Log4j2
 public class DockerContainerManager {
 
     private final DockerImageManager dockerImageManager;
@@ -32,11 +36,14 @@ public class DockerContainerManager {
     private final ResourceManager resourceManager;
     private final ThreadPoolTaskScheduler scheduler;
 
+    private final Map<String, Long> containerMemStat;
+
     public DockerContainerManager(DockerImageManager dockerImageManager, DockerClient docker,
                                   ResourceManager resourceManager) {
         this.dockerImageManager = dockerImageManager;
         this.docker = docker;
         this.resourceManager = resourceManager;
+        containerMemStat = new ConcurrentHashMap<>();
         this.scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(getRuntime().availableProcessors());
         scheduler.initialize();
@@ -59,16 +66,17 @@ public class DockerContainerManager {
 
         ContainerCreation creation = docker.createContainer(containerConfig);
         String id = creation.id();
+        log.info("Start container with id " + id);
         docker.startContainer(id);
 
         killIfTimeLimitExceeds(id, optionsState.millis);
-        Long memUsage = docker.stats(id).memoryStats().maxUsage();
+        collectContainerStat(id);
         docker.waitContainer(id);
 
-        return buildResult(id, memUsage);
+        return buildResult(id);
     }
 
-    private ContainerExecutionResult buildResult(String id, Long memUsage) throws Exception {
+    private ContainerExecutionResult buildResult(String id) throws Exception {
 
         String stdout = collectLogs(id, stdout());
         String stderr = collectLogs(id, stderr());
@@ -81,7 +89,7 @@ public class DockerContainerManager {
                 .stderr(stderr)
                 .executionTime(executionTime)
                 .exitCode(exitCode)
-                .memoryUsage(memUsage)
+                .memoryUsage(containerMemStat.get(id))
                 .build();
 
     }
@@ -105,6 +113,21 @@ public class DockerContainerManager {
             }
         }, Instant.now().plus(millis, MILLIS));
 
+    }
+
+    private void collectContainerStat(String id) {
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                Long memoryStats = docker.stats(id).memoryStats().maxUsage();
+                if (memoryStats != null) {
+                    containerMemStat.putIfAbsent(id, memoryStats);
+                    containerMemStat.computeIfPresent(id, (k, v) -> Math.max(v, memoryStats));
+                }
+
+            } catch (DockerException | InterruptedException e) {
+                log.error(e);
+            }
+        }, Instant.now(), Duration.ofMillis(500));
     }
 
     private CodeLanguage languageByWorkDir(Path workDir) {
