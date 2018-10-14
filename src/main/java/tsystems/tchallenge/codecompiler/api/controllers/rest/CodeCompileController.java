@@ -2,8 +2,7 @@ package tsystems.tchallenge.codecompiler.api.controllers.rest;
 
 import org.springframework.web.bind.annotation.*;
 import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
-import tsystems.tchallenge.codecompiler.api.dto.CodeSubmissionInvoice;
-import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
+import tsystems.tchallenge.codecompiler.api.dto.CompileSubmissionInvoice;
 import tsystems.tchallenge.codecompiler.managers.compilation.CodeCompilationManager;
 
 @RestController
@@ -17,7 +16,7 @@ public class CodeCompileController {
     }
 
     @PostMapping
-    public CodeCompilationResultDto compileCode(@RequestBody CodeSubmissionInvoice invoice) {
+    public CodeCompilationResultDto compileCode(@RequestBody CompileSubmissionInvoice invoice) {
         return codeCompilationManager.compileFile(invoice);
     }
 

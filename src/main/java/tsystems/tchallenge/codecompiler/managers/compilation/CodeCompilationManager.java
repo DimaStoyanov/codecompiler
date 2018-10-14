@@ -1,11 +1,10 @@
 package tsystems.tchallenge.codecompiler.managers.compilation;
 
-import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
-import tsystems.tchallenge.codecompiler.api.dto.CodeSubmissionInvoice;
+import tsystems.tchallenge.codecompiler.api.dto.CompileSubmissionInvoice;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.converters.CodeCompilationResultConverter;
 import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
@@ -50,7 +49,7 @@ public class CodeCompilationManager {
     }
 
 
-    public CodeCompilationResultDto compileFile(CodeSubmissionInvoice invoice) {
+    public CodeCompilationResultDto compileFile(CompileSubmissionInvoice invoice) {
         invoice.validate();
         Path fileToCompile = copyToFile(invoice);
         Path workDir = fileToCompile.getParent();
@@ -101,7 +100,7 @@ public class CodeCompilationManager {
                 .build();
     }
 
-    private Path copyToFile(CodeSubmissionInvoice invoice) {
+    private Path copyToFile(CompileSubmissionInvoice invoice) {
         Path codeFile = resourceManager.createCodeFile(invoice.getLanguage());
         try (BufferedWriter writer = Files.newBufferedWriter(codeFile, UTF8)) {
             writer.write(invoice.getSourceCode());
