@@ -1,15 +1,19 @@
 var languageSelector = $('#language');
 var codeSelector = $('#code');
 var compileResponseSelector = $('#compile-response');
+var compilePB = $('#compile-pb');
 
 var submissionSelector = $('#submission-id');
 var inputSelector = $('#stdin');
 var tlSelector = $('#tl');
 var mlSelector = $('#ml');
 var runResponseSelector = $('#run-response');
+var runPB = $('#run-pb');
+
 
 $('#compile').click(function () {
-    compileResponseSelector.text('Loading...');
+    compilePB.show();
+    compileResponseSelector.text('');
     var payload = {
         language: languageSelector.val(),
         sourceCode: codeSelector.val()
@@ -20,14 +24,17 @@ $('#compile').click(function () {
         contentType:"application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
+        compilePB.hide();
         compileResponseSelector.text(prettyJSON(resp));
     }).fail(function (resp) {
-        compileResponseSelector.text(prettyJSON(resp.responseText));
+        compilePB.hide();
+        compileResponseSelector.text(prettyJSON(resp.responseJSON));
     })
 });
 
 $('#run').click(function () {
-    runResponseSelector.text('Loading...');
+    runPB.show();
+    runResponseSelector.text('');
     var payload = {
         submissionId: submissionSelector.val(),
         input: inputSelector.val(),
@@ -40,8 +47,10 @@ $('#run').click(function () {
         contentType:"application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
+        runPB.hide();
         runResponseSelector.text(prettyJSON(resp));
     }).fail(function (resp) {
+        runPB.hide();
         runResponseSelector.text(prettyJSON(resp.responseJSON));
     })
 });
