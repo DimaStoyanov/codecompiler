@@ -17,7 +17,7 @@ public class CodeRunController {
     }
 
     @PostMapping
-    public CodeRunResultDto runCode(CodeRunInvoice invoice) {
+    public CodeRunResultDto runCode(@RequestBody CodeRunInvoice invoice) {
         return codeRunningManager.runCode(invoice);
     }
 
