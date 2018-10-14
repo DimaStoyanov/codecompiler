@@ -17,14 +17,16 @@ Code compiler
     In order to connect to docker server you can configure 
     two env variables:   `DOCKER_HOST` and `DOCKER_CERT_PATH`      
     By default, server will try to connect to docker locally.  
-    In that case **current user should have access to docker**  
-    (you can check it by evaluating command `docker info` without `sudo`)
-    On windows you should expose daemon without TLS
+    In that case **current user should have access to docker**    
+    (you can check it by evaluating command `docker info` without `sudo`)  
+    On windows you should expose daemon without TLS  
     Open Docker Settings -> General -> check `Expose daemon on tcp://localhost:2375 without TLS`
 
 ### API
 You can try using api with Swagger UI.   
 Just run server and visit `localhost:8080/swagger-ui.html`
+
+Or you can find simple UI for that api on `localhost:8080/`
 
 ### Usage  example 
 

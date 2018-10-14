@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Compiler</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+</head>
+<body>
+<div class="row mt-4 ml-2 mr-2">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                Compile task
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>
+                        Language<span style="color: red">*</span>
+                        <select id="language" class="form-control">
+                            <option value="JAVA">Java</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    Code<span style="color: red">*</span>
+                    <textarea id="code" rows="13" class="form-control" placeholder="print(123)">
+                    </textarea>
+                </div>
+
+                <div class="row justify-content-center">
+                    <button id="compile" class="btn btn-lg btn-outline-success">
+                        Compile
+                    </button>
+                </div>
+
+
+            </div>
+            <div class="card-footer">
+                <h3 class="text-center">Response</h3>
+                <pre id="compile-response">No response yet
+                </pre>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                Run task
+            </div>
+            <div class="card-body">
+                <div class="form-group mt-9">
+                    <label>
+                        Submission Id <span style="color: red"> *</span>
+                        <input id="submission-id" class="form-control">
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        Stdin (Optional)
+                        <input id="stdin" class="form-control">
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        Time Limit (Optional)
+                        <input id="tl" class="form-control">
+                    </label>
+                </div>
+
+
+                <div class="form-group">
+                    <label>
+                        Memory Limit (Optional)
+                        <input id="ml" class="form-control">
+                    </label>
+                </div>
+
+                <div class="row justify-content-center mt-9">
+                    <button id="run" class="btn btn-lg btn-outline-success">
+                        Run
+                    </button>
+                </div>
+
+
+            </div>
+            <div class="card-footer">
+                <h3 class="text-center">Response</h3>
+                <pre id="run-response">No response yet
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="index.js"></script>
+</body>
+</html>

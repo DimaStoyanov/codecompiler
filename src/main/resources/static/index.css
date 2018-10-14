@@ -1,0 +1,16 @@
+label {
+    width: 100%;
+}
+
+span {
+    padding-left: 0.5rem;
+}
+
+.mt-9 {
+    margin-top: 3.9rem;
+}
+
+.card-header {
+    font-size: x-large;
+    text-align: center;
+}
