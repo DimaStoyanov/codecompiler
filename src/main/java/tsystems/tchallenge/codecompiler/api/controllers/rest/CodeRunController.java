@@ -6,7 +6,7 @@ import tsystems.tchallenge.codecompiler.api.dto.CodeRunResultDto;
 import tsystems.tchallenge.codecompiler.managers.running.CodeRunningManager;
 
 @RestController
-@RequestMapping("submissions/")
+@RequestMapping("run-submissions/")
 public class CodeRunController {
 
 

@@ -14,5 +14,5 @@ public class CodeRunResultDto {
     private String output;
     private String stderr;
     private Long memory;
-    private String time;
+    private Long time;
 }
