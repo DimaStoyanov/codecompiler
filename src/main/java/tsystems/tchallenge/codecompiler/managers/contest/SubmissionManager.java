@@ -1,7 +1,6 @@
 package tsystems.tchallenge.codecompiler.managers.contest;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
@@ -10,7 +9,6 @@ import tsystems.tchallenge.codecompiler.api.dto.CodeRunResultDto;
 import tsystems.tchallenge.codecompiler.api.dto.CompileSubmissionInvoice;
 import tsystems.tchallenge.codecompiler.converters.SubmissionStatusConverter;
 import tsystems.tchallenge.codecompiler.domain.models.*;
-import tsystems.tchallenge.codecompiler.domain.repositories.ContestRepository;
 import tsystems.tchallenge.codecompiler.domain.repositories.SubmissionResultRepository;
 import tsystems.tchallenge.codecompiler.managers.compilation.CodeCompilationManager;
 import tsystems.tchallenge.codecompiler.managers.running.CodeRunningManager;
@@ -84,7 +82,7 @@ public class SubmissionManager {
         }
 
         if (!submissionMatcherManager.matches(expected, codeRunResult.getOutput())) {
-            result.setStatus(SubmissionStatus.WRONG_ANWER);
+            result.setStatus(SubmissionStatus.WRONG_ANSWER);
             return false;
         }
 
