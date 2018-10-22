@@ -50,7 +50,7 @@ runBtn.click(function () {
         executionTimeLimit: tlSelector.val()
     };
     $.ajax({
-        url: '/submissions/',
+        url: '/run-submissions/',
         type: 'POST',
         contentType:"application/json; charset=utf-8",
         data: JSON.stringify(payload)
