@@ -67,7 +67,7 @@ public class SubmissionManager {
 
     private void updateRunTestStatus(SubmissionResult result, int testNumber) {
         result.setStatus(SubmissionStatus.RUNNING_TEST);
-        result.setTestNumber(testNumber);
+        result.setTestNumber(testNumber + 1);
         submissionResultRepository.save(result);
     }
 
