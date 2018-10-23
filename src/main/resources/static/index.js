@@ -189,6 +189,44 @@ function collectTests() {
     return tests;
 }
 
+
+
+var submissionLang = $('#submissionLang');
+var submissionCode = $('#submissionCode');
+var contestId = $('#contestId');
+var saveSubmission = $('#createSubmission');
+
+var submissioResponse = $('#submission-response');
+var submissionPB = $('#submission-pb');
+
+
+saveSubmission.click(function () {
+    submissionPB.show();
+    submissioResponse.text('');
+    disable(saveSubmission);
+    var data = {
+        contestId: contestId.val(),
+        submission: {
+            language: submissionLang.val(),
+            sourceCode: submissionCode.val()
+        }
+    };
+    $.ajax({
+        url: '/submissions/',
+        type: 'POST',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data)
+    }).done(function (resp) {
+        enable(saveSubmission);
+        submissionPB.hide();
+        submissioResponse.text(prettyJSON(resp));
+    }).fail(function (resp) {
+        enable(saveSubmission);
+        submissionPB.hide();
+        submissioResponse.text(prettyJSON(resp.responseJSON));
+    })
+});
+
 function prettyJSON(data) {
     return JSON.stringify(data, null, 2);
 }

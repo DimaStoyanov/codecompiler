@@ -33,6 +33,7 @@ public class SubmissionManager {
             return;
         }
 
+
         result.setMemory(new ArrayList<>());
         result.setTime(new ArrayList<>());
         List<Test> tests = contest.getTests();
@@ -55,7 +56,9 @@ public class SubmissionManager {
     private CodeCompilationResultDto compile(SubmissionResult result, CompileSubmissionInvoice invoice) {
         result.setStatus(SubmissionStatus.COMPILING);
         submissionResultRepository.save(result);
-        return codeCompilationManager.compileFile(invoice);
+        CodeCompilationResultDto codeCompilationResult = codeCompilationManager.compileFile(invoice);
+        result.setCompileTaskId(codeCompilationResult.getId());
+        return codeCompilationResult;
     }
 
     private void setCmpErr(CodeCompilationResultDto codeCompilationResult, SubmissionResult result) {

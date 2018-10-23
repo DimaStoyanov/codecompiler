@@ -187,6 +187,105 @@
 </div>
 
 <div id="submissionContent" class="d-none justify-content-center">
+    <div class="row mt-4 ml-2 mr-2">
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    Create submission
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>
+                            Language<span style="color: red">*</span>
+                            <select id="submissionLang" class="form-control">
+                                <option value="JAVA">Java</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        Code<span style="color: red">*</span>
+                        <textarea id="submissionCode" rows="13" class="form-control" placeholder="print(123)">
+                    </textarea>
+                    </div>
+
+                    <div class="form-group">
+                        Contest ID<span style="color: red">*</span>
+                        <input id="contestId" class="form-control">
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <button id="createSubmission" class="btn btn-lg btn-outline-success">
+                            Create submission
+                        </button>
+                    </div>
+
+
+                </div>
+                <div class="card-footer">
+                    <h3 class="text-center">Response</h3>
+                    <pre id="submission-response">No response yet
+                </pre>
+                    <div id="submission-pb" class="progress" style="display: none">
+                        <div class="progress-bar w-100 progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             aria-valuenow="75" aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    Get submission result
+                </div>
+                <div class="card-body">
+                    <div class="form-group mt-9">
+                        <label>
+                            Submission Id <span style="color: red"> *</span>
+                            <input id="submissionGetId" class="form-control">
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            With Language (Optional)
+                            <input id="withLang" class="form-control">
+                        </label>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>
+                            With Source (Optional)
+                            <input id="withSource" class="form-control">
+                        </label>
+                    </div>
+
+                    <div class="row justify-content-center mt-9">
+                        <button id="getSubmissionResult" class="btn btn-lg btn-outline-success">
+                            Get Submission Result
+                        </button>
+                    </div>
+
+
+                </div>
+                <div class="card-footer">
+                    <h3 class="text-center">Response</h3>
+                    <pre id="submission-result-response">No response yet
+                </pre>
+                    <div id="submission-result-pb" class="progress" style="display: none">
+                        <div class="progress-bar w-100 progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             aria-valuenow="75" aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 

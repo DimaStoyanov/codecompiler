@@ -49,6 +49,7 @@ public class ResourceManager {
         return Paths.get(languageDir.toAbsolutePath() + codeSuffix);
     }
 
+
     public String getCodeDirPath(CodeLanguage language) {
         return getCodeDir(language)
                 .toAbsolutePath()
@@ -67,8 +68,7 @@ public class ResourceManager {
 
     public Path createCodeFile(CodeLanguage language) {
         String submissionDirPath = getSubmissionDirPath(language, UUID.randomUUID().toString());
-        String fileName = getBaseFileName(language) + "." + language.ext;
-        Path path = Paths.get(submissionDirPath + "/" + fileName);
+        Path path = Paths.get(submissionDirPath + "/" + language.sourceFileName());
 
         try {
             Files.createDirectories(Paths.get(submissionDirPath));
@@ -107,11 +107,8 @@ public class ResourceManager {
         if (!Files.isRegularFile(outputFile)) {
             return null;
         }
-        try {
-            return new String(Files.readAllBytes(outputFile));
-        } catch (IOException e) {
-            throw internal(e);
-        }
+
+        return readFile(outputFile);
     }
 
     public String getCompiledFilePath(CodeLanguage language, Path fileToCompilePath) {
@@ -137,10 +134,29 @@ public class ResourceManager {
         return Paths.get(codeFilePath).getParent().toAbsolutePath().toString();
     }
 
-    private String getBaseFileName(CodeLanguage language) {
-        if (language == CodeLanguage.JAVA) {
-            return "Main";
-        }
-        throw new UnsupportedOperationException("language " + language + " not supported");
+    public String getSourceCode(String workDir) {
+        Path sourceFile = getSourceFile(workDir);
+        return readFile(sourceFile);
     }
+
+    public Path getSourceFile(String workDir) {
+        Path codeDir = Paths.get(workDir).getParent();
+        CodeLanguage language = CodeLanguage.valueOf(codeDir.getFileName().toString().toUpperCase());
+        return Paths.get(workDir + "/" + language.sourceFileName());
+    }
+
+    public String readFile(String filePath) {
+        return readFile(Paths.get(filePath));
+    }
+
+
+    private String readFile(Path file) {
+        try {
+            return new String(Files.readAllBytes(file));
+        } catch (IOException e) {
+            throw internal(e);
+        }
+    }
+
+
 }

@@ -100,18 +100,14 @@ public class CodeRunningManager {
                                               CodeRunInvoice invoice) {
         CodeRunStatus status = status(result, invoice);
         String workDirPath = resourceManager.getWorkDirPath(compilationResult.getCompiledFilePath());
-        String output = resourceManager.readOutputFileIfAvailable(workDirPath);
-        output = output == null ? result.getStdout() : output;
         String inputPath = resourceManager.getInputPath(workDirPath);
 
         return CodeRunResult.builder()
                 .status(status)
                 .language(compilationResult.getLanguage())
-                .output(output)
                 .outputPath(resourceManager.getOutputPath(workDirPath))
-                .input(invoice.getInput())
-                .time(result.getExecutionTime().toMillis())
                 .inputPath(inputPath)
+                .time(result.getExecutionTime().toMillis())
                 .memory(result.getMemoryUsage())
                 .stderr(result.getStderr())
                 .languageName(compilationResult.getLanguage().name)

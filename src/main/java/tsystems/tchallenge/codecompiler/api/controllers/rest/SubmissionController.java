@@ -15,12 +15,16 @@ public class SubmissionController {
     private final SubmissionResultManager submissionManager;
 
     @PostMapping
-    public IdAware createSubmission(SubmissionInvoice invoice) {
+    public IdAware createSubmission(@RequestBody SubmissionInvoice invoice) {
         return submissionManager.createSubmission(invoice);
     }
 
     @GetMapping("{id}")
-    public SubmissionResultDto getSubmission(@PathVariable String id) {
-        return submissionManager.getResult(id);
+    public SubmissionResultDto getSubmission(@PathVariable String id,
+                                             @RequestParam(value = "withLang", defaultValue = "true")
+                                                     Boolean withLang,
+                                             @RequestParam(value = "withSource", defaultValue = "false")
+                                                     Boolean withSource) {
+        return submissionManager.getResult(id, withLang, withSource);
     }
 }

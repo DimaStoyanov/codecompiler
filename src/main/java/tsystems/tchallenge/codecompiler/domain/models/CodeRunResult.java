@@ -15,9 +15,7 @@ public class CodeRunResult extends AbstractDocument{
     private String languageName;
     private CodeRunStatus status;
     private String inputPath;
-    private String input;
     private String outputPath;
-    private String output;
     private String stderr;
     private Long memory;
     private Long time;

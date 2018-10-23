@@ -1,14 +1,12 @@
 package tsystems.tchallenge.codecompiler.domain.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,4 +17,5 @@ public class SubmissionResult extends AbstractDocument{
     private String cmpErr;
     private List<Long> memory;
     private List<Long> time;
+    private String compileTaskId;
 }

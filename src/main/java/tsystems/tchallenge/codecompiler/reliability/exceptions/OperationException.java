@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import org.springframework.http.HttpStatus;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class OperationException extends RuntimeException {
     private final OperationExceptionType type;
     private final String description;
