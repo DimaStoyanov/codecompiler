@@ -26,4 +26,14 @@ public class ContestManager {
         contestRepository.save(contest);
         return contest.justId();
     }
+
+    private void setDefaultIfMissing(ContestInvoice invoice) {
+        if (invoice.getMemoryLimit() == null) {
+            invoice.setMemoryLimit(256 * 1024 * 1024L);
+        }
+
+        if (invoice.getTimeLimit() == null) {
+            invoice.setMemoryLimit(2_000L);
+        }
+    }
 }

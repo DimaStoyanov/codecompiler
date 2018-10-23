@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 <body>
+<ul class="nav nav-tabs">
+    <li class="nav-item"><a id="compileAndRun" class="nav-link active">Compile & Run Code</a></li>
+    <li class="nav-item"><a id="contest" class="nav-link">Create Contest</a></li>
+    <li class="nav-item"><a id="submission" class="nav-link">Test Submission</a></li>
+</ul>
+
+<div id="compileAndRunContent">
 <div class="row mt-4 ml-2 mr-2">
     <div class="col-12 col-lg-6">
         <div class="card">
@@ -108,6 +115,81 @@
         </div>
     </div>
 </div>
-<script src="index.js"></script>
+</div>
+
+<div id="contestContent" class="d-none">
+    <div class="row pt-2">
+        <div class="col-12 col-md-3"></div>
+        <div class="col-12 col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Create contest
+                </div>
+                <div class="card-body">
+
+                    <div class="form-group">
+                        <label>
+                            Name <span style="color: red"> *</span>
+                            <input id="name" class="form-control">
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Memory Limit in bytes (Optional)
+                            <input id="memoryLimit" class="form-control">
+                        </label>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>
+                            Time limit in millis (Optional)
+                            <input id="timeLimit" class="form-control">
+                        </label>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <button id="add_test" class="mt-2 btn btn-outline-success">
+                            Add test
+                        </button>
+                    </div>
+
+
+                    <div class="test-container">
+
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <button id="save_test" class="mt-2 btn btn-outline-success">
+                            Save contest
+                        </button>
+                    </div>
+
+
+                </div>
+                <div class="card-footer">
+                    <h3 class="text-center">Response</h3>
+                    <pre id="contest-response">No response yet
+                </pre>
+                    <div id="contest-pb" class="progress" style="display: none">
+                        <div class="progress-bar w-100 progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             aria-valuenow="75" aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="submissionContent" class="d-none justify-content-center">
+
+</div>
+
+    <script src="index.js"></script>
 </body>
 </html>

@@ -12,6 +12,35 @@ var runResponseSelector = $('#run-response');
 var runPB = $('#run-pb');
 var runBtn = $('#run');
 
+var compileAndRun = $('#compileAndRun');
+var contest = $('#contest');
+var submission = $('#submission');
+
+var compileAndRunContent = $('#compileAndRunContent');
+var contestContent = $('#contestContent');
+var submissionContent = $('#submissionContent');
+
+
+compileAndRun.click(onTabClick(compileAndRun, compileAndRunContent));
+contest.click(onTabClick(contest, contestContent));
+submission.click(onTabClick(submission, submissionContent));
+
+
+function onTabClick(linkSelector, contentSelector) {
+    return function () {
+        compileAndRun.removeClass("active");
+        contest.removeClass("active");
+        submission.removeClass("active");
+        linkSelector.addClass("active");
+        compileAndRunContent.addClass('d-none');
+        contestContent.addClass("d-none");
+        submissionContent.addClass("d-none");
+        contentSelector.removeClass("d-none");
+    }
+
+}
+
+
 compileBtn.click(function () {
     compilePB.show();
     compileResponseSelector.text('');
@@ -25,7 +54,7 @@ compileBtn.click(function () {
     $.ajax({
         url: '/compile-submissions/',
         type: 'POST',
-        contentType:"application/json; charset=utf-8",
+        contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
         enable(compileBtn);
@@ -52,7 +81,7 @@ runBtn.click(function () {
     $.ajax({
         url: '/run-submissions/',
         type: 'POST',
-        contentType:"application/json; charset=utf-8",
+        contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
         enable(runBtn);
@@ -65,6 +94,100 @@ runBtn.click(function () {
     })
 });
 
+
+var testList = $('.test-container');
+var addTestBtn = $("#add_test");
+var testNumber = 0;
+
+var contestName = $('#name');
+var contestML = $('#memoryLimit');
+var contestTL = $('#timeLimit');
+var saveTest = $('#save_test');
+
+var contestResponse = $('#contest-response');
+var contestPB = $('#contest-pb');
+
+addTestBtn.click(function () {
+    var testContent = $(document.createElement('div'));
+    testContent.addClass("row");
+
+    testNumber++;
+    var number = $(document.createElement("div"));
+    number.addClass("col-1 pt-5");
+    number.text(testNumber);
+
+    var input = createInput("Test input");
+    input.addClass("col-5");
+
+    var output = createInput("Expected test output");
+    output.addClass("col-6");
+
+    testContent.append(number);
+    testContent.append(input);
+    testContent.append(output);
+    testList.append(testContent);
+});
+
+function createInput(label) {
+    var inputDiv = $(document.createElement("div"));
+    inputDiv.addClass("form-group");
+    var inputLabel = $(document.createElement("label"));
+    inputLabel.text(label);//<span style="color: red"> *</span>
+    var requiredSpan = $(document.createElement("span"));
+    requiredSpan.text("*");
+    requiredSpan.css("color", "red");
+    inputLabel.append(requiredSpan);
+    var input = $(document.createElement("textarea"));
+    input.addClass("form-control");
+
+
+    inputLabel.append(input);
+    inputDiv.append(inputLabel);
+    return inputDiv;
+
+}
+
+saveTest.click(function () {
+    compilePB.show();
+    contestResponse.text('');
+    disable(saveTest);
+    var data = {
+        memoryLimit: contestML.val(),
+        timeLimit: contestTL.val(),
+        name: contestName.val(),
+        tests: collectTests()
+    };
+    $.ajax({
+        url: '/contests/',
+        type: 'POST',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data)
+    }).done(function (resp) {
+        enable(saveTest);
+        compilePB.hide();
+        contestResponse.text(prettyJSON(resp));
+    }).fail(function (resp) {
+        enable(saveTest);
+        contestPB.hide();
+        contestResponse.text(prettyJSON(resp.responseJSON));
+    })
+});
+
+
+function collectTests() {
+    var inputs = $('.test-container textarea');
+    var tests = [];
+
+    for (var i = 0; i < inputs.length; i++) {
+        var test = {
+            input: inputs.get(i).value,
+            expectedOutput: inputs.get(i + 1).value
+        };
+        tests.push(test);
+        i++;
+    }
+    return tests;
+}
 
 function prettyJSON(data) {
     return JSON.stringify(data, null, 2);
