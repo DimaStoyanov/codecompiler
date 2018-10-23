@@ -1,6 +1,7 @@
 package tsystems.tchallenge.codecompiler.managers.contest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.IdAware;
 import tsystems.tchallenge.codecompiler.api.dto.SubmissionInvoice;
 import tsystems.tchallenge.codecompiler.api.dto.SubmissionResultDto;
@@ -19,6 +20,7 @@ import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptio
 import tsystems.tchallenge.codecompiler.utils.IdContainer;
 
 @RequiredArgsConstructor
+@Service
 public class SubmissionResultManager {
 
     private final ContestRepository contestRepository;
