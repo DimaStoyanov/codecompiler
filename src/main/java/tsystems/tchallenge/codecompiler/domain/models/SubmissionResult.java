@@ -11,7 +11,7 @@ import java.util.List;
 @ToString(exclude = "cmpErr")
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "/submissions")
+@Document(collection = "submissions")
 public class SubmissionResult extends AbstractDocument{
     private SubmissionStatus status;
     private Integer testNumber;

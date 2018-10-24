@@ -227,6 +227,37 @@ saveSubmission.click(function () {
     })
 });
 
+
+var submissionGetId = $('#submissionGetId');
+var withLang = $('#withLang');
+var withSource = $('#withSource');
+var getSubmissionResult = $('#getSubmissionResult');
+var submissionResultPB = $('#submission-result-pb');
+var submissionResultReponse = $('#submission-result-response');
+
+
+getSubmissionResult.click(function () {
+    submissionResultPB.show();
+    submissionResultReponse.text('');
+    disable(getSubmissionResult);
+    $.ajax({
+        url: '/submissions/' + submissionGetId.val()
+            + "?withLang=" + withLang.val()
+            + "&withSource=" + withSource.val(),
+        type: 'GET',
+        contentType: "application/json; charset=utf-8"
+    }).done(function (resp) {
+        enable(getSubmissionResult);
+        submissionResultPB.hide();
+        submissionResultReponse.text(prettyJSON(resp));
+    }).fail(function (resp) {
+        enable(getSubmissionResult);
+        submissionResultPB.hide();
+        submissionResultReponse.text(prettyJSON(resp.responseJSON));
+    })
+});
+
+
 function prettyJSON(data) {
     return JSON.stringify(data, null, 2);
 }

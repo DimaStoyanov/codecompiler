@@ -37,7 +37,7 @@ public class ContestManager {
         }
 
         if (invoice.getTimeLimit() == null) {
-            invoice.setMemoryLimit(2_000L);
+            invoice.setTimeLimit(2_000L);
         }
     }
 }

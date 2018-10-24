@@ -19,7 +19,7 @@
     <div class="col-12 col-lg-6">
         <div class="card">
             <div class="card-header">
-                Compile task
+                Compile task (POST /compile-submissions/)
             </div>
             <div class="card-body">
                 <div class="form-group">
@@ -62,7 +62,7 @@
     <div class="col-12 col-lg-6">
         <div class="card">
             <div class="card-header">
-                Run task
+                Run task (POST /run-submissions/)
             </div>
             <div class="card-body">
                 <div class="form-group mt-9">
@@ -123,7 +123,7 @@
         <div class="col-12 col-md-6">
             <div class="card">
                 <div class="card-header">
-                    Create contest
+                    Create contest (POST /contests/)
                 </div>
                 <div class="card-body">
 
@@ -191,7 +191,7 @@
         <div class="col-12 col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    Create submission
+                    Create submission (POST /submissions/)
                 </div>
                 <div class="card-body">
                     <div class="form-group">
@@ -205,7 +205,7 @@
 
                     <div class="form-group">
                         Code<span style="color: red">*</span>
-                        <textarea id="submissionCode" rows="13" class="form-control" placeholder="print(123)">
+                        <textarea id="submissionCode" rows="10" class="form-control" placeholder="print(123)">
                     </textarea>
                     </div>
 
@@ -239,10 +239,10 @@
         <div class="col-12 col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    Get submission result
+                    Get submission result (GET /submissions/{id})
                 </div>
                 <div class="card-body">
-                    <div class="form-group mt-9">
+                    <div class="form-group">
                         <label>
                             Submission Id <span style="color: red"> *</span>
                             <input id="submissionGetId" class="form-control">
