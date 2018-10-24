@@ -57,7 +57,7 @@ Tasks, which includes launch may contain input, output and stderr
 ### API
 
 #### Languages
-Get - `/languages/`  - retrieve list of available languages with some info.   
+##### Get - `/languages/`  - retrieve list of available languages with some info.   
 
 Request example:  
 ```
@@ -77,7 +77,7 @@ Response example:
 ```
 [Up](#user-manual)
 #### Compile submissions
-POST - `/compile-submissions/` - create new compile task.   
+##### POST - `/compile-submissions/` - create new compile task.   
 Body contains 2 mandatory fields: 
 * `language` - One from available list
 * `sourceCode` - code to compile  
@@ -97,7 +97,7 @@ Response example:
 }
 ```
 
-GET - `/compile-submissions/{id}` - retrieve compile submission result  
+##### GET - `/compile-submissions/{id}` - retrieve compile submission result  
 Path variable `id `can be obtain from the compile-submission creation response.
 
 Request example:
@@ -117,7 +117,7 @@ Response example:
 ```
 [Up](#user-manual)
 #### Run submissions
-POST - `/run-submissions/` - create new launch program task.   
+##### POST - `/run-submissions/` - create new launch program task.   
 Launch compiled program with specified restrictions. Compile task should have finished successfully.    
 Body contains fields:
 * `submissionId` - mandatory, id from compile submission
@@ -146,7 +146,7 @@ Response example:
 }
 ```
 
-GET - `/run-submissions/{id}` - retrieve result of launch program.  
+##### GET - `/run-submissions/{id}` - retrieve result of launch program.  
 Path variable `id `can be obtain from the run-submission creation response.
 
 Request example:
@@ -169,7 +169,7 @@ Response example:
 ```
 [Up](#user-manual)
 #### Contests
-POST - `/contests/` - create new contest
+##### POST - `/contests/` - create new contest
 Body contains next fields:
 * `name` - mandatory field
 * `tests` - mandatory field, list of test objects 
@@ -192,7 +192,7 @@ Response example:
 ```
 
 #### Submissions
-POST - `/submissions/` - create new submission (async operation)
+##### POST - `/submissions/` - create new submission (async operation)
 Body contains following mandatory fields:
 * `contestId` - id returned from creation contest request
 * `submission` - object, that contains:
@@ -210,7 +210,7 @@ Response example:
 }
 ```
 
-GET - `/submissions/{id}` - retrieve status of submission.  
+##### GET - `/submissions/{id}` - retrieve status of submission.  
 Accepts two arbitrary parameters:
 * `withLang` - include language info in response or not
 * `withSource` - include code in response or not
