@@ -30,22 +30,9 @@ Or you can find simple UI for that api on `localhost:8080/`
 
 ### Usage  example 
 
-1. Retrieve list of available languages  
-    ```
-    curl -X GET "http://localhost:8080/languages/" -H "accept: */*"
-    ```
-    ```
-    [
-      {
-        "language": "JAVA",
-        "languageName": "Java 8u171",
-        "sourceFileExt": "java",
-        "compiledFileExt": "class",
-        "notes": "Submission should be in 1 file (1 public class).\nPublic class should have name \"Main\".\nNo external dependencies (via maven, gradle, e.t.c) supported (at least now)"
-      }
-    ]
-    ```
-2. Create compile task
+[User manual](docs/user-manual.md)
+
+1. Create compile task
     ```
        curl -X POST "http://localhost:8080/compile-submissions/" 
         -H "accept: */*" -H "Content-Type: application/json" 
@@ -63,7 +50,7 @@ Or you can find simple UI for that api on `localhost:8080/`
       "cmpErr": ""
     }
     ```
-3. Run code (using id from previous step)  
+2. Run code (using id from previous step)  
     ```
     curl -X POST "http://localhost:8080/submissions/?submissionId=5bba8f42ea22b3211ccb0174" -H "accept: */*"
     ```    
