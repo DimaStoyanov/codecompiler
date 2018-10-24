@@ -1,6 +1,7 @@
 package tsystems.tchallenge.codecompiler.managers.contest;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class SubmissionManager {
     private final CodeCompilationManager codeCompilationManager;
     private final CodeRunningManager codeRunningManager;
@@ -45,19 +47,22 @@ public class SubmissionManager {
             CodeRunResultDto codeRunResult = codeRunningManager.runCode(runInvoice);
             if (!passTest(codeRunResult, result, test.getExpectedOutput())) {
                 submissionResultRepository.save(result);
+                log.info(result);
                 return;
             }
         }
 
         result.setStatus(SubmissionStatus.OK);
         submissionResultRepository.save(result);
+        log.info(result);
     }
 
     private CodeCompilationResultDto compile(SubmissionResult result, CompileSubmissionInvoice invoice) {
         result.setStatus(SubmissionStatus.COMPILING);
-        submissionResultRepository.save(result);
         CodeCompilationResultDto codeCompilationResult = codeCompilationManager.compileFile(invoice);
         result.setCompileTaskId(codeCompilationResult.getId());
+        submissionResultRepository.save(result);
+        log.info(result);
         return codeCompilationResult;
     }
 
@@ -65,6 +70,7 @@ public class SubmissionManager {
         result.setStatus(SubmissionStatus.COMPILATION_ERROR);
         result.setCmpErr(codeCompilationResult.getCmpErr());
         submissionResultRepository.save(result);
+        log.info(result);
     }
 
 
@@ -72,6 +78,7 @@ public class SubmissionManager {
         result.setStatus(SubmissionStatus.RUNNING_TEST);
         result.setTestNumber(testNumber + 1);
         submissionResultRepository.save(result);
+        log.info(result);
     }
 
     private boolean passTest(CodeRunResultDto codeRunResult, SubmissionResult result, String expected) {

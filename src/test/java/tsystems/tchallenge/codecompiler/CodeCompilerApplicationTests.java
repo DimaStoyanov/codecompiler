@@ -10,7 +10,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class CodeCompilerApplicationTests {
 
     @Test
-    @Ignore("doesn't pass")
     public void contextLoads() {
     }
 

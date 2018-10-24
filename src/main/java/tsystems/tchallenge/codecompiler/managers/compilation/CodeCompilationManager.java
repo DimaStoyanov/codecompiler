@@ -12,18 +12,14 @@ import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationStatus;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.domain.repositories.CodeCompilationResultRepository;
 import tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager;
-import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
+import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.volumeWritable;
 import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.COMPILATION;
-import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder.internal;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_COMPILATION_RESULT;
 
@@ -34,13 +30,13 @@ public class CodeCompilationManager {
 
     private final CodeCompilationResultRepository codeCompilationResultRepository;
     private final DockerContainerManager dockerContainerManager;
-    private final ResourceManager resourceManager;
+    private final ServiceResourceManager resourceManager;
     private final CodeCompilationResultConverter codeCompilationResultConverter;
 
     @Autowired
     public CodeCompilationManager(CodeCompilationResultRepository codeCompilationResultRepository,
                                   DockerContainerManager dockerContainerManager,
-                                  ResourceManager resourceManager,
+                                  ServiceResourceManager resourceManager,
                                   CodeCompilationResultConverter codeCompilationResultConverter) {
         this.codeCompilationResultRepository = codeCompilationResultRepository;
         this.dockerContainerManager = dockerContainerManager;
@@ -51,8 +47,8 @@ public class CodeCompilationManager {
 
     public CodeCompilationResultDto compileFile(CompileSubmissionInvoice invoice) {
         invoice.validate();
-        Path fileToCompile = copyToFile(invoice);
-        Path workDir = fileToCompile.getParent();
+        Path workDir = resourceManager.createWorkDir(invoice.getLanguage());
+        resourceManager.createAndWriteCodeFile(workDir, invoice.getSourceCode());
 
         ContainerExecutionResult containerExecutionResult;
         try {
@@ -63,7 +59,7 @@ public class CodeCompilationManager {
             throw internal(invoice, e);
         }
 
-        CodeCompilationResult result = buildResult(invoice.getLanguage(), fileToCompile,
+        CodeCompilationResult result = buildResult(invoice.getLanguage(), workDir.getFileName().toString(),
                 containerExecutionResult);
         codeCompilationResultRepository.save(result);
         log.info(result);
@@ -76,39 +72,23 @@ public class CodeCompilationManager {
                 .orElseThrow(() -> this.compilationResultNotFound(id));
     }
 
-    private CodeCompilationResult buildResult(CodeLanguage language, Path fileToCompile,
+    private CodeCompilationResult buildResult(CodeLanguage language, String workDirName,
                                               ContainerExecutionResult result) {
         CodeCompilationStatus status;
-
         if (result.getExitCode() != 0) {
             status = CodeCompilationStatus.COMPILATION_ERROR;
         } else {
             status = CodeCompilationStatus.OK;
         }
 
-        String compiledFilePath = null;
-        if (status == CodeCompilationStatus.OK) {
-            compiledFilePath = resourceManager.getCompiledFilePath(language, fileToCompile);
-            resourceManager.validateFileExists(compiledFilePath);
-        }
-
         return CodeCompilationResult.builder()
                 .cmpErr(result.getStderr())
                 .status(status)
                 .language(language)
-                .compiledFilePath(compiledFilePath)
+                .workDirName(workDirName)
                 .build();
     }
 
-    private Path copyToFile(CompileSubmissionInvoice invoice) {
-        Path codeFile = resourceManager.createCodeFile(invoice.getLanguage());
-        try (BufferedWriter writer = Files.newBufferedWriter(codeFile, UTF8)) {
-            writer.write(invoice.getSourceCode());
-        } catch (IOException e) {
-            throw internal(e);
-        }
-        return codeFile;
-    }
 
 
     private OperationException compilationResultNotFound(String id) {

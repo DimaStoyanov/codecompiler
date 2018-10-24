@@ -2,12 +2,12 @@ package tsystems.tchallenge.codecompiler.managers.contest;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.IdAware;
 import tsystems.tchallenge.codecompiler.api.dto.SubmissionInvoice;
 import tsystems.tchallenge.codecompiler.api.dto.SubmissionResultDto;
 import tsystems.tchallenge.codecompiler.converters.SubmissionResultConverter;
-import tsystems.tchallenge.codecompiler.converters.SubmissionStatusConverter;
 import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
 import tsystems.tchallenge.codecompiler.domain.models.Contest;
 import tsystems.tchallenge.codecompiler.domain.models.SubmissionResult;
@@ -15,13 +15,11 @@ import tsystems.tchallenge.codecompiler.domain.models.SubmissionStatus;
 import tsystems.tchallenge.codecompiler.domain.repositories.CodeCompilationResultRepository;
 import tsystems.tchallenge.codecompiler.domain.repositories.ContestRepository;
 import tsystems.tchallenge.codecompiler.domain.repositories.SubmissionResultRepository;
-import tsystems.tchallenge.codecompiler.managers.compilation.CodeCompilationManager;
-import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
-import tsystems.tchallenge.codecompiler.managers.running.CodeRunningManager;
+import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
-import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType;
-import tsystems.tchallenge.codecompiler.utils.IdContainer;
+
+import java.nio.file.Path;
 
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_COMPILATION_RESULT;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_CONTEST;
@@ -29,6 +27,7 @@ import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationE
 
 @RequiredArgsConstructor
 @Service
+@Log4j2
 public class SubmissionResultManager {
 
     private final ContestRepository contestRepository;
@@ -36,7 +35,7 @@ public class SubmissionResultManager {
     private final SubmissionManager submissionManager;
     private final SubmissionResultConverter submissionResultConverter;
     private final CodeCompilationResultRepository compilationResultRepository;
-    private final ResourceManager resourceManager;
+    private final ServiceResourceManager resourceManager;
 
     public IdAware createSubmission(SubmissionInvoice invoice) {
         invoice.validate();
@@ -47,6 +46,7 @@ public class SubmissionResultManager {
                 .build();
 
         submissionResultRepository.save(result);
+        log.info("Create submission with id "  + result.getId());
         submissionManager.runTests(contest, invoice.getSubmission(), result);
         return result.justId();
     }
@@ -69,8 +69,8 @@ public class SubmissionResultManager {
                 submissionResultDto.setLanguageName(compilationResult.getLanguage().name);
             }
             if (withSource) {
-                String workDir = resourceManager.getWorkDirPath(compilationResult.getCompiledFilePath());
-                submissionResultDto.setSourceCode(resourceManager.getSourceCode(workDir));
+                Path workDir = resourceManager.getWorkDir(compilationResult.getWorkDirName(), compilationResult.getLanguage());
+                submissionResultDto.setSourceCode(resourceManager.readSourceCode(workDir));
             }
         }
 

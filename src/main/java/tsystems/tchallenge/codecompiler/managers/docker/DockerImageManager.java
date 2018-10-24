@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
-import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
+import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -20,13 +20,13 @@ import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType
 public class DockerImageManager {
 
     private final DockerClient docker;
-    private final ResourceManager resourceManager;
+    private final ServiceResourceManager resourceManager;
     private final EnumMap<CodeLanguage, String> compileImageByLang;
     private final EnumMap<CodeLanguage, String> runImageByLang;
 
 
     @Autowired
-    public DockerImageManager(DockerClient docker, ResourceManager resourceManager) {
+    public DockerImageManager(DockerClient docker, ServiceResourceManager resourceManager) {
         this.docker = docker;
         this.resourceManager = resourceManager;
         this.compileImageByLang = new EnumMap<>(CodeLanguage.class);
@@ -42,7 +42,7 @@ public class DockerImageManager {
         }
     }
 
-    public String getImageId(CodeLanguage language, DockerfileType type) {
+    String getImageId(CodeLanguage language, DockerfileType type) {
         switch (type) {
             case COMPILATION:
                 return compileImageByLang.get(language);

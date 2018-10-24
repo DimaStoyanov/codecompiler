@@ -8,14 +8,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "stderr")
 @EqualsAndHashCode(callSuper = true)
 @Document(collection = "code-runs")
 public class CodeRunResult extends AbstractDocument{
     private CodeLanguage language;
     private String languageName;
     private CodeRunStatus status;
-    private String inputPath;
-    private String outputPath;
+    private String compileSubmissionId;
     private String stderr;
     private Long memory;
     private Long time;

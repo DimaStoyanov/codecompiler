@@ -23,7 +23,7 @@ public enum CodeLanguage {
     }
 
     public String sourceFileName() {
-        return fileBaseName + ext;
+        return fileBaseName + "." + ext;
     }
 
 }

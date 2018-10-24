@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
+@ToString(exclude = "cmpErr")
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "/submissions")
