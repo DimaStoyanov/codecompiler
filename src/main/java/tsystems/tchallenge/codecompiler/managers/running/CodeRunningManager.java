@@ -4,32 +4,26 @@ import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import tsystems.tchallenge.codecompiler.api.dto.CodeCompilationResultDto;
 import tsystems.tchallenge.codecompiler.api.dto.CodeRunInvoice;
 import tsystems.tchallenge.codecompiler.api.dto.CodeRunResultDto;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.converters.CodeRunResultConverter;
-import tsystems.tchallenge.codecompiler.domain.models.*;
+import tsystems.tchallenge.codecompiler.domain.models.CodeCompilationResult;
+import tsystems.tchallenge.codecompiler.domain.models.CodeRunResult;
+import tsystems.tchallenge.codecompiler.domain.models.CodeRunStatus;
 import tsystems.tchallenge.codecompiler.domain.repositories.CodeCompilationResultRepository;
 import tsystems.tchallenge.codecompiler.domain.repositories.CodeRunResultRepository;
 import tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager;
-import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
+import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
-import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.memoryLimit;
-import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.timeLimit;
-import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.volumeWritable;
+import static tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option.*;
 import static tsystems.tchallenge.codecompiler.managers.resources.DockerfileType.RUNNING;
-import static tsystems.tchallenge.codecompiler.managers.resources.ResourceManager.UTF8;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder.internal;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_COMPILATION_RESULT;
 import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_RUN_RESULT;
@@ -42,14 +36,14 @@ public class CodeRunningManager {
     private final CodeRunResultRepository codeRunResultRepository;
     private final CodeCompilationResultRepository codeCompilationResultRepository;
     private final CodeRunResultConverter codeRunResultConverter;
-    private final ResourceManager resourceManager;
+    private final ServiceResourceManager resourceManager;
 
     @Autowired
     public CodeRunningManager(DockerContainerManager dockerContainerManager,
                               CodeRunResultRepository codeRunResultRepository,
                               CodeCompilationResultRepository codeCompilationResultRepository,
                               CodeRunResultConverter codeRunResultConverter,
-                              ResourceManager resourceManager) {
+                              ServiceResourceManager resourceManager) {
         this.dockerContainerManager = dockerContainerManager;
         this.codeRunResultRepository = codeRunResultRepository;
         this.codeCompilationResultRepository = codeCompilationResultRepository;
@@ -61,15 +55,14 @@ public class CodeRunningManager {
         invoice.validate();
         setDefaultsIfMissing(invoice);
 
-
         CodeCompilationResult compilationResult = codeCompilationResultRepository
                 .findById(invoice.getSubmissionId())
                 .orElseThrow(() -> compilationResultNotFound(invoice.getSubmissionId()));
 
+        Path workDir = resourceManager.getWorkDir(compilationResult.getWorkDirName(), compilationResult.getLanguage());
         if (!Strings.isNullOrEmpty(invoice.getInput())) {
-            attachInput(compilationResult.getCompiledFilePath(), invoice.getInput());
+            resourceManager.createAndWriteInputFile(workDir, invoice.getInput());
         }
-        Path workDir = Paths.get(compilationResult.getCompiledFilePath()).getParent();
 
         ContainerExecutionResult containerExecutionResult;
         try {
@@ -83,6 +76,7 @@ public class CodeRunningManager {
             throw internal(invoice, e);
         }
 
+        writeStdoutToFileIfMissing(workDir, containerExecutionResult.getStdout());
         CodeRunResult result = buildResult(compilationResult, containerExecutionResult, invoice);
         codeRunResultRepository.save(result);
         log.info(result);
@@ -99,24 +93,22 @@ public class CodeRunningManager {
     private CodeRunResult buildResult(CodeCompilationResult compilationResult,
                                               ContainerExecutionResult result,
                                               CodeRunInvoice invoice) {
-        CodeRunStatus status = status(result, invoice);
-        String workDirPath = resourceManager.getWorkDirPath(compilationResult.getCompiledFilePath());
-        String output = resourceManager.readOutputFileIfAvailable(workDirPath);
-        output = output == null ? result.getStdout() : output;
-        String inputPath = resourceManager.getInputPath(workDirPath);
-
         return CodeRunResult.builder()
-                .status(status)
+                .status(status(result, invoice))
                 .language(compilationResult.getLanguage())
-                .output(output)
-                .outputPath(resourceManager.getOutputPath(workDirPath))
-                .input(invoice.getInput())
                 .time(result.getExecutionTime().toMillis())
-                .inputPath(inputPath)
                 .memory(result.getMemoryUsage())
                 .stderr(result.getStderr())
+                .compileSubmissionId(compilationResult.getId())
                 .languageName(compilationResult.getLanguage().name)
                 .build();
+    }
+
+    private void writeStdoutToFileIfMissing(Path workDir, String stdout) {
+        String outputFile = resourceManager.readOutput(workDir);
+        if (outputFile == null) {
+            resourceManager.createAndWriteOutputFile(workDir, stdout);
+        }
     }
 
     private CodeRunStatus status(ContainerExecutionResult result, CodeRunInvoice invoice) {
@@ -132,18 +124,6 @@ public class CodeRunningManager {
             return CodeRunStatus.RUNTIME_ERROR;
         } else {
             return CodeRunStatus.OK;
-        }
-    }
-
-
-    private void attachInput(String compiledFilePath, String input) {
-        String workDirPath = resourceManager.getWorkDirPath(compiledFilePath);
-        Path inputFile = resourceManager.createInputFile(workDirPath);
-
-        try (BufferedWriter writer = Files.newBufferedWriter(inputFile, UTF8)) {
-            writer.write(input);
-        } catch (IOException e) {
-            throw internal(e);
         }
     }
 

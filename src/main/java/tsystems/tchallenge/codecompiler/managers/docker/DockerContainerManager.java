@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
-import tsystems.tchallenge.codecompiler.managers.resources.ResourceManager;
+import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
@@ -33,13 +33,13 @@ public class DockerContainerManager {
 
     private final DockerImageManager dockerImageManager;
     private final DockerClient docker;
-    private final ResourceManager resourceManager;
+    private final ServiceResourceManager resourceManager;
     private final ThreadPoolTaskScheduler scheduler;
 
     private final Map<String, Long> containerMemStat;
 
     public DockerContainerManager(DockerImageManager dockerImageManager, DockerClient docker,
-                                  ResourceManager resourceManager) {
+                                  ServiceResourceManager resourceManager) {
         this.dockerImageManager = dockerImageManager;
         this.docker = docker;
         this.resourceManager = resourceManager;
@@ -66,7 +66,6 @@ public class DockerContainerManager {
 
         ContainerCreation creation = docker.createContainer(containerConfig);
         String id = creation.id();
-        log.info("Start container with id " + id);
         docker.startContainer(id);
 
         killIfTimeLimitExceeds(id, optionsState.millis);
@@ -144,7 +143,7 @@ public class DockerContainerManager {
                 .memory(memoryLimit)
                 .memorySwappiness(0)
                 .appendBinds(from(workDir.toAbsolutePath().toString())
-                        .to(resourceManager.codeSuffix)
+                        .to("/code")
                         .readOnly(readOnly)
                         .build())
                 .build();

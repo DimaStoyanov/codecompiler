@@ -5,7 +5,7 @@ import lombok.Data;
 import tsystems.tchallenge.codecompiler.utils.ValidationAware;
 
 @Data
-public class CodeSubmissionInvoice implements ValidationAware {
+public class CompileSubmissionInvoice implements ValidationAware {
     private CodeLanguage language;
     private String sourceCode;
 
