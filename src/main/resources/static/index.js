@@ -42,11 +42,7 @@ function onTabClick(linkSelector, contentSelector) {
 
 
 compileBtn.click(function () {
-    compilePB.show();
-    compileResponseSelector.text('');
-    disable(compileBtn);
-
-
+    showPb(compilePB, contestResponse, compileBtn);
     var payload = {
         language: languageSelector.val(),
         sourceCode: codeSelector.val()
@@ -57,21 +53,14 @@ compileBtn.click(function () {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
-        enable(compileBtn);
-        compilePB.hide();
-        compileResponseSelector.text(prettyJSON(resp));
+        onDone(compilePB, contestResponse, compileBtn, resp);
     }).fail(function (resp) {
-        enable(compileBtn);
-        compilePB.hide();
-        compileResponseSelector.text(prettyJSON(resp.responseJSON));
+        onDone(compilePB, contestResponse, compileBtn, resp.responseJSON);
     })
 });
 
 runBtn.click(function () {
-    runPB.show();
-    runResponseSelector.text('');
-    disable(runBtn);
-
+    showPb(runPB, runResponseSelector, runBtn);
     var payload = {
         submissionId: submissionSelector.val(),
         input: inputSelector.val(),
@@ -84,13 +73,10 @@ runBtn.click(function () {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
-        enable(runBtn);
-        runPB.hide();
-        runResponseSelector.text(prettyJSON(resp));
+        onDone(runPB, runResponseSelector, runBtn, resp);
     }).fail(function (resp) {
-        enable(runBtn);
-        runPB.hide();
-        runResponseSelector.text(prettyJSON(resp.responseJSON));
+        onDone(runPB, runResponseSelector, runBtn, resp.responseJSON);
+
     })
 });
 
@@ -148,9 +134,7 @@ function createInput(label) {
 }
 
 saveTest.click(function () {
-    compilePB.show();
-    contestResponse.text('');
-    disable(saveTest);
+    showPb(contestPB, contestResponse, saveTest);
     var data = {
         memoryLimit: contestML.val(),
         timeLimit: contestTL.val(),
@@ -163,13 +147,9 @@ saveTest.click(function () {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(data)
     }).done(function (resp) {
-        enable(saveTest);
-        compilePB.hide();
-        contestResponse.text(prettyJSON(resp));
+        onDone(contestPB, contestResponse, saveTest, resp);
     }).fail(function (resp) {
-        enable(saveTest);
-        contestPB.hide();
-        contestResponse.text(prettyJSON(resp.responseJSON));
+        onDone(contestPB, contestResponse, saveTest, resp.responseJSON);
     })
 });
 
@@ -190,7 +170,6 @@ function collectTests() {
 }
 
 
-
 var submissionLang = $('#submissionLang');
 var submissionCode = $('#submissionCode');
 var contestId = $('#contestId');
@@ -201,9 +180,7 @@ var submissionPB = $('#submission-pb');
 
 
 saveSubmission.click(function () {
-    submissionPB.show();
-    submissioResponse.text('');
-    disable(saveSubmission);
+    showPb(submissionPB, submissioResponse, saveSubmission);
     var data = {
         contestId: contestId.val(),
         submission: {
@@ -217,13 +194,9 @@ saveSubmission.click(function () {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(data)
     }).done(function (resp) {
-        enable(saveSubmission);
-        submissionPB.hide();
-        submissioResponse.text(prettyJSON(resp));
+        onDone(submissionPB, submissioResponse, saveSubmission, resp);
     }).fail(function (resp) {
-        enable(saveSubmission);
-        submissionPB.hide();
-        submissioResponse.text(prettyJSON(resp.responseJSON));
+        onDone(submissionPB, submissioResponse, saveSubmission, resp.responseJSON);
     })
 });
 
@@ -231,15 +204,25 @@ saveSubmission.click(function () {
 var submissionGetId = $('#submissionGetId');
 var withLang = $('#withLang');
 var withSource = $('#withSource');
-var getSubmissionResult = $('#getSubmissionResult');
+var autorefresh = $('#autorefresh');
+var getSubmissionResultBtn = $('#getSubmissionResult');
 var submissionResultPB = $('#submission-result-pb');
 var submissionResultReponse = $('#submission-result-response');
 
+var updTimer;
 
-getSubmissionResult.click(function () {
-    submissionResultPB.show();
-    submissionResultReponse.text('');
-    disable(getSubmissionResult);
+getSubmissionResultBtn.click(getSubmissionResult);
+
+
+function getSubmissionResult() {
+    if (updTimer) {
+        clearInterval(updTimer);
+    }
+    if (autorefresh.prop('checked')) {
+        setInterval(getSubmissionResult, 500);
+    }
+
+    showPb(submissionResultPB, submissionResultReponse, getSubmissionResultBtn);
     $.ajax({
         url: '/submissions/' + submissionGetId.val()
             + "?withLang=" + withLang.val()
@@ -247,26 +230,25 @@ getSubmissionResult.click(function () {
         type: 'GET',
         contentType: "application/json; charset=utf-8"
     }).done(function (resp) {
-        enable(getSubmissionResult);
-        submissionResultPB.hide();
-        submissionResultReponse.text(prettyJSON(resp));
+        onDone(submissionResultPB, submissionResultReponse, getSubmissionResultBtn, resp);
     }).fail(function (resp) {
-        enable(getSubmissionResult);
-        submissionResultPB.hide();
-        submissionResultReponse.text(prettyJSON(resp.responseJSON));
+        onDone(submissionResultPB, submissionResultReponse, getSubmissionResultBtn, resp.responseJSON);
     })
-});
+}
+
+function showPb(pb, response, btn) {
+    pb.show();
+    response.text('');
+    btn.attr('disabled', true)
+}
+
+function onDone(pb, response, btn, data) {
+    pb.hide();
+    enable(btn);
+    response.text(prettyJSON(data));
+}
 
 
 function prettyJSON(data) {
     return JSON.stringify(data, null, 2);
-}
-
-
-function disable(selector) {
-    selector.attr('disabled', true)
-}
-
-function enable(selector) {
-    selector.attr('disabled', false)
 }
