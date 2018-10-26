@@ -161,10 +161,6 @@ public class DockerContainerManager {
             this.value = value;
         }
 
-        public static Option volumeReadOnly() {
-            return new Option(VOLUME_READ_ONLY, true);
-        }
-
         public static Option volumeWritable() {
             return new Option(VOLUME_WRITABLE, true);
         }
@@ -175,6 +171,10 @@ public class DockerContainerManager {
 
         public static Option memoryLimit(Long kb) {
             return new Option(MEMORY_LIMIT, kb);
+        }
+
+        public static Option networkEnabled(Boolean enabled) {
+            return new Option(NETWORK_ENABLED, enabled);
         }
     }
 

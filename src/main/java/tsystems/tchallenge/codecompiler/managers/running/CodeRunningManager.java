@@ -74,7 +74,8 @@ public class CodeRunningManager {
         ContainerExecutionResult containerExecutionResult;
         try {
             containerExecutionResult = dockerContainerManager
-                    .startContainer(workDir, RUNNING, volumeWritable(),
+                    .startContainer(workDir, RUNNING,
+                            volumeWritable(),
                             timeLimit(invoice.getExecutionTimeLimit()),
                             memoryLimit(invoice.getMemoryLimit()));
             log.info("Compilation result: " + containerExecutionResult);

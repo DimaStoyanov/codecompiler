@@ -3,11 +3,10 @@ package tsystems.tchallenge.codecompiler.managers.docker;
 import tsystems.tchallenge.codecompiler.managers.docker.DockerContainerManager.Option;
 
 public class ContainerOptionsState {
-
-
-    public boolean volumeReadOnly = true;
-    public Long millis = 5_000L;
-    public Long bytes = 256 * 1024 * 1024L;
+    boolean volumeReadOnly = true;
+    boolean networkEnabled = false;
+    Long millis = 5_000L;
+    Long bytes = 256 * 1024 * 1024L;
 
     private ContainerOptionsState() {
 
@@ -21,9 +20,6 @@ public class ContainerOptionsState {
         ContainerOptionsState state = defaultState();
         for (Option option : options) {
             switch (option.option) {
-                case VOLUME_READ_ONLY:
-                    state.volumeReadOnly = (boolean) option.value;
-                    break;
                 case VOLUME_WRITABLE:
                     state.volumeReadOnly = !(boolean) option.value;
                     break;
@@ -32,6 +28,9 @@ public class ContainerOptionsState {
                     break;
                 case TIME_LIMIT:
                     state.millis = (Long) option.value;
+                    break;
+                case NETWORK_ENABLED:
+                    state.networkEnabled = (boolean) option.value;
 
             }
         }
