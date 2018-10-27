@@ -29,16 +29,6 @@ ext {
     lombokVersion = "1.18.2"
 }
 
-
-sourceSets {
-    main {
-        resources {
-            srcDirs "src/main/resources"
-        }
-    }
-}
-
-
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter-data-mongodb')
     implementation('org.springframework.boot:spring-boot-starter-data-rest')
@@ -46,7 +36,6 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-web')
     compileOnly('org.projectlombok:lombok')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
-    
     testImplementation('de.flapdoodle.embed:de.flapdoodle.embed.mongo')
     testImplementation('org.springframework.security:spring-security-test')
     compile 'com.spotify:docker-client:8.14.0'
@@ -59,5 +48,6 @@ dependencies {
     compile "org.mapstruct:mapstruct-jdk8:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    compile 'org.springframework.boot:spring-boot-starter-actuator:2.0.6.RELEASE'
 
 }

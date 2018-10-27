@@ -2,8 +2,9 @@ spring:
   data:
     mongodb:
       database: code-compiler
-      host: ${TCHALLENGE_CODECOMPILER_DATABASE_HOST:localhost}
+      host: ${TCHALLENGE_CODECOMPILER_DATABASE_HOST:192.168.56.2}
       port: ${TCHALLENGE_CODECOMPILER_DATABASE_PORT:27017}
-
 server:
   port: ${TCHALLENGE_CODECOMPILER_PORT:4568}
+docker:
+  host: ${DOCKER_HOST:192.168.56.2:2375}

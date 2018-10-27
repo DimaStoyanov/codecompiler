@@ -1,8 +1,8 @@
 package tsystems.tchallenge.codecompiler.managers.running;
 
 import com.google.common.base.Strings;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.CodeRunInvoice;
 import tsystems.tchallenge.codecompiler.api.dto.CodeRunResultDto;
@@ -30,6 +30,7 @@ import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationE
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class CodeRunningManager {
 
     private final DockerContainerManager dockerContainerManager;
@@ -38,32 +39,63 @@ public class CodeRunningManager {
     private final CodeRunResultConverter codeRunResultConverter;
     private final ServiceResourceManager resourceManager;
 
-    @Autowired
-    public CodeRunningManager(DockerContainerManager dockerContainerManager,
-                              CodeRunResultRepository codeRunResultRepository,
-                              CodeCompilationResultRepository codeCompilationResultRepository,
-                              CodeRunResultConverter codeRunResultConverter,
-                              ServiceResourceManager resourceManager) {
-        this.dockerContainerManager = dockerContainerManager;
-        this.codeRunResultRepository = codeRunResultRepository;
-        this.codeCompilationResultRepository = codeCompilationResultRepository;
-        this.codeRunResultConverter = codeRunResultConverter;
-        this.resourceManager = resourceManager;
-    }
-
     public CodeRunResultDto runCode(CodeRunInvoice invoice) {
+        // Validate and preset invoice
         invoice.validate();
         setDefaultsIfMissing(invoice);
 
-        CodeCompilationResult compilationResult = codeCompilationResultRepository
-                .findById(invoice.getSubmissionId())
-                .orElseThrow(() -> compilationResultNotFound(invoice.getSubmissionId()));
-
-        Path workDir = resourceManager.getWorkDir(compilationResult.getWorkDirName(), compilationResult.getLanguage());
+        // Prepare workspace
+        CodeCompilationResult compilationResult = findCompilationResult(invoice.getSubmissionId());
+        Path workDir = createWorkDir(compilationResult);
         if (!Strings.isNullOrEmpty(invoice.getInput())) {
             resourceManager.createAndWriteInputFile(workDir, invoice.getInput());
         }
 
+        // Execute
+        ContainerExecutionResult containerExecutionResult = executeContainer(workDir, invoice);
+
+
+        // Collect results
+        writeStdoutToFileIfMissing(workDir, containerExecutionResult.getStdout());
+        CodeRunResult result = buildResult(compilationResult, containerExecutionResult, invoice,
+                workDir.getFileName().toString());
+        codeRunResultRepository.save(result);
+        log.info(result);
+        return codeRunResultConverter.toDto(result);
+    }
+
+    public CodeRunResultDto getRunCodeResult(String id) {
+        return codeRunResultRepository.findById(id)
+                .map(codeRunResultConverter::toDto)
+                .orElseThrow(() -> runResultNotFound(id));
+
+    }
+
+    private void setDefaultsIfMissing(CodeRunInvoice invoice) {
+        if (invoice.getExecutionTimeLimit() == null) {
+            invoice.setExecutionTimeLimit(5_000L);
+        }
+
+        if (invoice.getMemoryLimit() == null) {
+            invoice.setMemoryLimit(256 * 1024 * 1024L);
+        }
+    }
+
+    private CodeCompilationResult findCompilationResult(String id) {
+        return codeCompilationResultRepository
+                .findById(id)
+                .orElseThrow(() -> compilationResultNotFound(id));
+    }
+
+    private Path createWorkDir(CodeCompilationResult compilationResult) {
+        Path workDir = resourceManager.createWorkDir(compilationResult.getLanguage());
+        Path compilationWorkDir = resourceManager
+                .getWorkDir(compilationResult.getWorkDirName(), compilationResult.getLanguage());
+        resourceManager.cloneWorkDir(compilationWorkDir, workDir);
+        return workDir;
+    }
+
+    private ContainerExecutionResult executeContainer(Path workDir, CodeRunInvoice invoice) {
         ContainerExecutionResult containerExecutionResult;
         try {
             containerExecutionResult = dockerContainerManager
@@ -75,30 +107,20 @@ public class CodeRunningManager {
         } catch (Exception e) {
             throw internal(invoice, e);
         }
-
-        writeStdoutToFileIfMissing(workDir, containerExecutionResult.getStdout());
-        CodeRunResult result = buildResult(compilationResult, containerExecutionResult, invoice);
-        codeRunResultRepository.save(result);
-        log.info(result);
-        return codeRunResultConverter.toDto(result);
-    }
-
-    public CodeRunResultDto getRunCodeResult(String id) {
-        return codeRunResultRepository.findById(id)
-        .map(codeRunResultConverter::toDto)
-                .orElseThrow(() -> runResultNotFound(id));
-
+        return containerExecutionResult;
     }
 
     private CodeRunResult buildResult(CodeCompilationResult compilationResult,
-                                              ContainerExecutionResult result,
-                                              CodeRunInvoice invoice) {
+                                      ContainerExecutionResult result,
+                                      CodeRunInvoice invoice,
+                                      String workDirName) {
         return CodeRunResult.builder()
                 .status(status(result, invoice))
                 .language(compilationResult.getLanguage())
                 .time(result.getExecutionTime().toMillis())
                 .memory(result.getMemoryUsage())
                 .stderr(result.getStderr())
+                .workDirName(workDirName)
                 .compileSubmissionId(compilationResult.getId())
                 .languageName(compilationResult.getLanguage().name)
                 .build();
@@ -127,20 +149,6 @@ public class CodeRunningManager {
         }
     }
 
-
-    private void setDefaultsIfMissing(CodeRunInvoice invoice) {
-        if (invoice.getExecutionTimeLimit() == null) {
-            invoice.setExecutionTimeLimit(5_000L);
-        }
-
-        if (invoice.getMemoryLimit() == null) {
-            invoice.setMemoryLimit(256 * 1024 * 1024L);
-        }
-    }
-
-
-
-
     private OperationException compilationResultNotFound(String id) {
         return OperationExceptionBuilder.builder()
                 .description("Compilation result with specified id not found")
@@ -148,7 +156,6 @@ public class CodeRunningManager {
                 .attachment(id)
                 .build();
     }
-
 
 
     private OperationException runResultNotFound(String id) {

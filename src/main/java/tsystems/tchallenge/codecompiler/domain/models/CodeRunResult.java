@@ -1,7 +1,6 @@
 package tsystems.tchallenge.codecompiler.domain.models;
 
 import lombok.*;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -17,6 +16,7 @@ public class CodeRunResult extends AbstractDocument{
     private CodeRunStatus status;
     private String compileSubmissionId;
     private String stderr;
+    private String workDirName;
     private Long memory;
     private Long time;
 }

@@ -3,17 +3,21 @@ package tsystems.tchallenge.codecompiler.managers.docker;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.messages.*;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerCreation;
+import com.spotify.docker.client.messages.ContainerState;
+import com.spotify.docker.client.messages.HostConfig;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.ContainerExecutionResult;
 import tsystems.tchallenge.codecompiler.domain.models.CodeLanguage;
 import tsystems.tchallenge.codecompiler.managers.resources.DockerfileType;
-import tsystems.tchallenge.codecompiler.managers.resources.ServiceResourceManager;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationException;
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
+import javax.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -29,25 +33,20 @@ import static tsystems.tchallenge.codecompiler.managers.docker.ContainerOption.*
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class DockerContainerManager {
 
     private final DockerImageManager dockerImageManager;
     private final DockerClient docker;
-    private final ServiceResourceManager resourceManager;
-    private final ThreadPoolTaskScheduler scheduler;
+    private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
-    private final Map<String, Long> containerMemStat;
+    private final Map<String, Long> containerMemStat = new ConcurrentHashMap<>();
 
-    public DockerContainerManager(DockerImageManager dockerImageManager, DockerClient docker,
-                                  ServiceResourceManager resourceManager) {
-        this.dockerImageManager = dockerImageManager;
-        this.docker = docker;
-        this.resourceManager = resourceManager;
-        containerMemStat = new ConcurrentHashMap<>();
-        this.scheduler = new ThreadPoolTaskScheduler();
+
+    @PostConstruct
+    public void init() {
         scheduler.setPoolSize(getRuntime().availableProcessors());
         scheduler.initialize();
-
     }
 
     public ContainerExecutionResult startContainer(Path workDir, DockerfileType dockerfileType,
