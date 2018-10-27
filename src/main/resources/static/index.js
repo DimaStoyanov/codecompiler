@@ -53,9 +53,9 @@ compileBtn.click(function () {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
     }).done(function (resp) {
-        onDone(compilePB, contestResponse, compileBtn, resp);
+        onDone(compilePB, compileResponseSelector, compileBtn, resp);
     }).fail(function (resp) {
-        onDone(compilePB, contestResponse, compileBtn, resp.responseJSON);
+        onDone(compilePB, compileResponseSelector, compileBtn, resp.responseJSON);
     })
 });
 
@@ -211,18 +211,18 @@ var submissionResultReponse = $('#submission-result-response');
 
 var updTimer;
 
-getSubmissionResultBtn.click(getSubmissionResult);
+getSubmissionResultBtn.click(getSubmissionResult.bind(null, true));
 
 
-function getSubmissionResult() {
-    if (updTimer) {
-        clearInterval(updTimer);
+
+function getSubmissionResult(forced) {
+    if (autorefresh.prop('checked') && forced) {
+        if (updTimer) {
+            clearInterval(updTimer);
+        }
+        updTimer = setInterval(getSubmissionResult.bind(null, false), 500);
     }
-    if (autorefresh.prop('checked')) {
-        setInterval(getSubmissionResult, 500);
-    }
 
-    showPb(submissionResultPB, submissionResultReponse, getSubmissionResultBtn);
     $.ajax({
         url: '/submissions/' + submissionGetId.val()
             + "?withLang=" + withLang.val()
@@ -231,6 +231,9 @@ function getSubmissionResult() {
         contentType: "application/json; charset=utf-8"
     }).done(function (resp) {
         onDone(submissionResultPB, submissionResultReponse, getSubmissionResultBtn, resp);
+        if (resp.status !== 'RUNNING_TEST' && resp.status !== 'WAITING_IN_QUEUE' && resp.status !== 'COMPILING') {
+            clearInterval(updTimer);
+        }
     }).fail(function (resp) {
         onDone(submissionResultPB, submissionResultReponse, getSubmissionResultBtn, resp.responseJSON);
     })
@@ -244,7 +247,7 @@ function showPb(pb, response, btn) {
 
 function onDone(pb, response, btn, data) {
     pb.hide();
-    enable(btn);
+    btn.attr('disabled', false);
     response.text(prettyJSON(data));
 }
 
