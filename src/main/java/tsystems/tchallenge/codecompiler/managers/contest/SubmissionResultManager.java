@@ -3,6 +3,7 @@ package tsystems.tchallenge.codecompiler.managers.contest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Service;
 import tsystems.tchallenge.codecompiler.api.dto.IdAware;
 import tsystems.tchallenge.codecompiler.api.dto.SubmissionInvoice;
@@ -20,10 +21,9 @@ import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptio
 import tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionBuilder;
 
 import java.nio.file.Path;
+import java.util.concurrent.ExecutorService;
 
-import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_COMPILATION_RESULT;
-import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_CONTEST;
-import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.ERR_SUBMISSION_RESULT;
+import static tsystems.tchallenge.codecompiler.reliability.exceptions.OperationExceptionType.*;
 
 @RequiredArgsConstructor
 @Service
@@ -37,6 +37,11 @@ public class SubmissionResultManager {
     private final CodeCompilationResultRepository compilationResultRepository;
     private final ServiceResourceManager resourceManager;
 
+    @Lookup
+    public ExecutorService getExecutorService() {
+        return null;
+    }
+
     public IdAware createSubmission(SubmissionInvoice invoice) {
         invoice.validate();
         Contest contest = contestRepository.findById(invoice.getContestId())
@@ -47,7 +52,7 @@ public class SubmissionResultManager {
 
         submissionResultRepository.save(result);
         log.info("Create submission with id "  + result.getId());
-        submissionManager.runTests(contest, invoice.getSubmission(), result);
+        submissionManager.runTests(contest, invoice.getSubmission(), result, getExecutorService());
         return result.justId();
     }
 
