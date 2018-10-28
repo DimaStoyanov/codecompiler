@@ -45,7 +45,7 @@ public class CodeRunningManager {
         setDefaultsIfMissing(invoice);
 
         // Prepare workspace
-        CodeCompilationResult compilationResult = findCompilationResult(invoice.getSubmissionId());
+        var compilationResult = findCompilationResult(invoice.getSubmissionId());
         Path workDir = createWorkDir(compilationResult);
         if (!Strings.isNullOrEmpty(invoice.getInput())) {
             resourceManager.createAndWriteInputFile(workDir, invoice.getInput());
@@ -57,7 +57,7 @@ public class CodeRunningManager {
 
         // Collect results
         writeStdoutToFileIfMissing(workDir, containerExecutionResult.getStdout());
-        CodeRunResult result = buildResult(compilationResult, containerExecutionResult, invoice,
+        var result = buildResult(compilationResult, containerExecutionResult, invoice,
                 workDir.getFileName().toString());
         codeRunResultRepository.save(result);
         log.info(result);
