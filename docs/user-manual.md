@@ -1,6 +1,7 @@
 # User manual
 
 * [General purpose](#general-purpose)
+* [Workflow](#workflow)
 * [Model](#model)
     * [Main entities](#main-entities)
     * [Statuses](#statuses)
@@ -17,6 +18,20 @@
 Code compiler service can be used to compile&run program, 
 create contest and run tests, that verify the answer 
 with the output of the program
+
+### Workflow
+For compile and run code workflow contains from 2 action:
+1. Create compile task
+2. Create run task
+Note, that run task can contain input. This input will be written into `input.txt` file.
+Your program can read this input and write output to `stdout` or `output.txt` file.
+
+For run tests workflow is following:
+1. Create contest
+2. Create submission (one contest may have multiple submissions)
+3. Check status of submission
+Program also can read input from `input.txt` file and can write output to `stdout` or `output.txt`.
+
 
 ### Model
 #### Main entities

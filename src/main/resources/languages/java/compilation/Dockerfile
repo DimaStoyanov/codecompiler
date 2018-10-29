@@ -1,2 +1,2 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jdk-oracle
 CMD javac code/Main.java

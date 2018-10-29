@@ -1,3 +1,3 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jdk-oracle
 WORKDIR code
 CMD java Main

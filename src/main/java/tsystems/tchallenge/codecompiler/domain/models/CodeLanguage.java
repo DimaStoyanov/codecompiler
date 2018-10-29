@@ -1,7 +1,7 @@
 package tsystems.tchallenge.codecompiler.domain.models;
 
 public enum CodeLanguage {
-    JAVA("Main", "java", "class", "Java 8u171",
+    JAVA("Main", "java", "class", "Java 11.0.1",
             "Submission should be in 1 file (1 public class).\n" +
             "Public class should have name \"Main\".\n" +
                     "Main class must have main method with signature " +

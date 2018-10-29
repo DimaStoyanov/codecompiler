@@ -1,18 +1,27 @@
 Code compiler
 ----  
-
-### Prerequisites
+Rest service for compile&run code
+### Requirements
 - Mongo DB 
 - Docker
+
+### Technologies
+- Java 10
+- Gradle
+- Spring Boot 2.5
+- Mongo DB
+- Docker
+- Mapstruct
+
 
 ### How to run  
 `gradle bootRun`
 
 ### Configuration
 - Mongo DB  
-    There is no configuration for db yet. 
-    Mongo service should run locally with default port `27017`
-    and without authorization
+    Two env. vars:  
+    TCHALLENGE_CODECOMPILER_DATABASE_HOST=localhost
+    TCHALLENGE_CODECOMPILER_DATABASE_PORT=27017
 - Docker  
     In order to connect to docker server you can configure 
     two env variables:   `DOCKER_HOST` and `DOCKER_CERT_PATH`      
