@@ -70,6 +70,7 @@ public class DockerContainerManager {
         killIfTimeLimitExceeds(id, optionsState.millis);
         collectContainerStat(id);
         docker.waitContainer(id);
+        docker.removeContainer(id);
 
         return buildResult(id);
     }

@@ -1,2 +1,2 @@
-FROM openjdk:11-jdk-oracle
+FROM openjdk:11
 CMD javac code/Main.java

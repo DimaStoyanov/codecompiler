@@ -8,3 +8,5 @@ server:
   port: ${TCHALLENGE_CODECOMPILER_PORT:4568}
 docker:
   host: ${DOCKER_HOST:192.168.56.2:2375}
+  username: ${DOCKER_USERNAME:heylimon}
+  password: ${DOCKER_PASSWORD:password}

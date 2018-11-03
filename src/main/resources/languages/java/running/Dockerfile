@@ -1,3 +1,3 @@
-FROM openjdk:11-jdk-oracle
+FROM openjdk:11
 WORKDIR code
 CMD java Main
