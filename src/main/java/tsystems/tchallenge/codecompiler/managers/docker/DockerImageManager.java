@@ -72,18 +72,14 @@ public class DockerImageManager {
         String imageName = (dockerUsername + "/" + language+ "_" + type).toLowerCase();
         return getImageFromRegistry(imageName)
                 .or(() -> pullImage(imageName))
-                .orElseGet(() -> {
-                    var id = createImage(language, type, imageName);
-                    pushImage(imageName);
-                    return id;
-                });
+                .orElseGet(() -> pushImage(createImage(language, type, imageName)));
     }
 
     private Optional<String> getImageFromRegistry(@NonNull String imageName) {
         try {
             ImageInfo imageInfo = docker.inspectImage(imageName);
             log.info(String.format("Get image %s from registry", imageName));
-            return Optional.of(imageInfo.id());
+            return Optional.of(imageName);
         } catch (ImageNotFoundException e) {
             return Optional.empty();
         } catch (Exception e) {
@@ -95,8 +91,7 @@ public class DockerImageManager {
         try {
             docker.pull(imageName);
             log.info(String.format("Successfully pull image %s", imageName));
-            ImageInfo imageInfo = docker.inspectImage(imageName);
-            return Optional.of(imageInfo.id());
+            return Optional.of(imageName);
         } catch (ImageNotFoundException e) {
             return Optional.empty();
         } catch (Exception e) {
@@ -108,15 +103,15 @@ public class DockerImageManager {
     private String createImage(CodeLanguage language, DockerfileType type, String imageName) {
         Path dockerFileDir = resourceManager.getDockerfileDir(language, type);
         try {
-            String imageId = docker.build(dockerFileDir, imageName);
+            docker.build(dockerFileDir, imageName);
             log.info("Successfully created image " + imageName);
-            return imageId;
+            return imageName;
         } catch (DockerException | InterruptedException | IOException e) {
             throw new IllegalStateException("Can not build docker image", e);
         }
     }
 
-    private void pushImage(String imageName) {
+    private String pushImage(String imageName) {
         try {
             RegistryAuth auth = RegistryAuth.builder()
                     .username(dockerUsername)
@@ -128,6 +123,7 @@ public class DockerImageManager {
             log.info(String.format("Unable to push image %s, use registry image", imageName));
             log.error(e);
         }
+        return imageName;
     }
 
 

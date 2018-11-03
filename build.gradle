@@ -45,7 +45,7 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     testImplementation('de.flapdoodle.embed:de.flapdoodle.embed.mongo')
     testImplementation('org.springframework.security:spring-security-test')
-    implementation 'com.spotify:docker-client:8.14.0'
+    implementation 'com.spotify:docker-client:8.14.3'
     implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.26'
     implementation group: 'org.glassfish.jersey.core', name: 'jersey-common', version: '2.26'
     implementation group: 'org.glassfish.jersey.bundles.repackaged', name: 'jersey-guava', version: '2.25.1'

@@ -70,9 +70,10 @@ public class DockerContainerManager {
         killIfTimeLimitExceeds(id, optionsState.millis);
         collectContainerStat(id);
         docker.waitContainer(id);
-        docker.removeContainer(id);
-
-        return buildResult(id);
+        ContainerExecutionResult result = buildResult(id);
+        // Not working: see https://github.com/spotify/docker-client/issues/1103
+//        docker.removeContainer(id);
+        return result;
     }
 
     private ContainerExecutionResult buildResult(String id) throws Exception {
