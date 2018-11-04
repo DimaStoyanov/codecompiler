@@ -2,6 +2,7 @@ package tsystems.tchallenge.codecompiler.managers.docker;
 
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.LogStream;
+import com.spotify.docker.client.exceptions.ContainerNotFoundException;
 import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
@@ -23,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 
 import static com.spotify.docker.client.DockerClient.LogsParam.stderr;
 import static com.spotify.docker.client.DockerClient.LogsParam.stdout;
@@ -68,11 +70,11 @@ public class DockerContainerManager {
         docker.startContainer(id);
 
         killIfTimeLimitExceeds(id, optionsState.millis);
-        collectContainerStat(id);
+        var scheduledFuture = collectContainerStat(id);
         docker.waitContainer(id);
         ContainerExecutionResult result = buildResult(id);
-        // Not working: see https://github.com/spotify/docker-client/issues/1103
-//        docker.removeContainer(id);
+        scheduledFuture.cancel(true);
+        docker.removeContainer(id);
         return result;
     }
 
@@ -115,8 +117,8 @@ public class DockerContainerManager {
 
     }
 
-    private void collectContainerStat(String id) {
-        scheduler.scheduleWithFixedDelay(() -> {
+    private ScheduledFuture<?> collectContainerStat(String id) {
+        return  scheduler.scheduleWithFixedDelay(() -> {
             try {
                 Long memoryStats = docker.stats(id).memoryStats().maxUsage();
                 if (memoryStats != null) {
@@ -125,9 +127,10 @@ public class DockerContainerManager {
                 }
 
             } catch (DockerException | InterruptedException e) {
-                log.error(e);
+                Thread.currentThread().interrupt();
+                log.debug(e);
             }
-        }, Instant.now(), Duration.ofMillis(500));
+        }, Instant.now(), Duration.ofMillis(1000));
     }
 
     private CodeLanguage languageByWorkDir(Path workDir) {
