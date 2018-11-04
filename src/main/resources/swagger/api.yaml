@@ -1,0 +1,513 @@
+swagger: '2.0'
+
+# Section: base API information
+info:
+  version: '0.1.0'
+  title: Contest Service API
+
+  description: |
+    Contest service is a micro service for checking program output with expected answer.
+
+  contact:
+    name: T-Challenge API Team
+    email: api@t-challenge.t-systems.com
+    url: http://t-challenge.t-systems.com
+
+host: localhost:4568
+
+schemes:
+- https
+
+produces:
+- application/json
+
+tags:
+- name: languages
+  description: Code languages
+- name: contests
+  description: Contest
+- name: compile-submissions
+  description: Compile Submissions
+- name: run-submissions
+  description: Run Submissions
+- name: submissions
+  description: Submissions
+
+# Section: API endpoints
+paths:
+  /languages:
+    get:
+      description: Retrieve list of available languages
+      operationId: getAvailableLanguages
+      tags:
+        - languages
+      responses:
+        '200':
+          description: The requested search result
+          schema:
+            $ref: '#/definitions/OperationResultWithLanguageInfo'
+        default:
+          $ref: '#/responses/Error'
+  /compilation/submissions:
+    post:
+      description: Create new compile task
+      operationId: createCompileTask
+      tags:
+      - compile-submissions
+      parameters:
+      - name: invoice
+        in: body
+        description: An invoice for creating compilation task
+        required: true
+        schema:
+          $ref: '#/definitions/CompileInvoice'
+      responses:
+        '200':
+          description: Result of compilation
+          schema:
+            $ref: '#/definitions/OperationResultWithCompileResult'
+        '400':
+          description: Expected error
+          schema:
+            $ref: '#/definitions/OperationResultWithViolationList'
+        default:
+          $ref: '#/responses/Error'
+
+  /compilation/submissions/{id}:
+    get:
+      description: Retrieve result of compilation.
+      operationId: getCompileResult
+      tags:
+      - compile-submissions
+      parameters:
+      - in: path
+        name: id
+        type: string
+        required: true
+        description: The ID of the submission.
+      responses:
+        '200':
+          description: Result of compilation
+          schema:
+            $ref: '#/definitions/OperationResultWithLanguageInfo'
+        default:
+          $ref: '#/responses/Error'
+
+  /run/submissions:
+    post:
+      description: Create new launch program task
+      operationId: createRunTask
+      tags:
+      - run-submissions
+      parameters:
+      - name: invoice
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/RunInvoice'
+      responses:
+        '200':
+          description: Result of compilation
+          schema:
+            $ref: '#/definitions/OperationResultWithCompileResult'
+        '400':
+          description: Expected error
+          schema:
+            $ref: '#/definitions/OperationResultWithViolationList'
+        default:
+          $ref: '#/responses/Error'
+  /run/submissions/{id}:
+    get:
+      description: Retrieve result of program launch
+      operationId: getRunResult
+      tags:
+      - run-submissions
+      parameters:
+      - name: id
+        description: The ID of submission
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Result of compilation
+          schema:
+            $ref: '#/definitions/OperationResultWithCompileResult'
+        default:
+          $ref: '#/responses/Error'
+
+  /contests:
+    post:
+      description: Create new contest
+      operationId: createContest
+      tags:
+      - contests
+      parameters:
+      - name: invoice
+        description: Invoice to create contest
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/Contest'
+      responses:
+        '200':
+          description: Created contest
+          schema:
+            $ref: '#/definitions/OperationResultWithContest'
+        '400':
+          description: Expected error
+          schema:
+            $ref: '#/definitions/OperationResultWithViolationList'
+        default:
+          $ref: '#/responses/Error'
+
+  /submissions:
+    post:
+      description: |
+        Create new submission. Submission is a program, that need to check by launching tests.
+      operationId: createSubmission
+      tags:
+      - submissions
+      parameters:
+      - name: invoice
+        description: Invoice to create submission
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/SubmissionInvoice'
+      responses:
+        '200':
+          description: Submission check results
+          schema:
+            $ref: '#/definitions/OperationResultWithContest'
+        '400':
+          description: Expected error
+          schema:
+            $ref: '#/definitions/OperationResultWithViolationList'
+        default:
+          $ref: '#/responses/Error'
+  /submissions/{id}:
+    get:
+      description: Retrieve result of submission
+      operationId: getSubmissionResult
+      tags:
+      - submissions
+      parameters:
+      - name: id
+        description: The ID of a submission
+        required: true
+        in: path
+        type: string
+      responses:
+        '200':
+          description: Submission check results
+          schema:
+            $ref: '#/definitions/OperationResultWithSubmissionResult'
+        default:
+          $ref: '#/responses/Error'
+
+
+
+
+
+definitions:
+  Language:
+    type: string
+    enum: &LANGUAGE
+    - JAVA
+    description: Code language
+
+  LanguageInfo:
+    type: object
+    properties:
+      language:
+        $ref: '#/definitions/Language'
+      name:
+        type: string
+        maxLength: 30
+        description: Full name of code language, including version
+      notes:
+        type: string
+        description: Additional data about language (some restrictions depending to contest service)
+
+  CompileInvoice:
+    type: object
+    description: Invoice to create compile task
+    properties:
+      language:
+        $ref: '#/definitions/Language'
+      sourceCode:
+        type: string
+        description: code to compile
+
+  CompileStatus:
+    type: string
+    description: status of compilation program
+    enum: &COMPILE_STATUS
+    - OK
+    - COMPILATION_ERROR
+    - SYSTEM ERROR
+
+  CompileResult:
+    type: object
+    description: Result of program compilation
+    properties:
+      id:
+        type: string
+        maxLength: 16
+      language:
+        $ref: '#/definitions/Language'
+      languageName:
+        type: string
+        maxLength: 30
+        description: Name of code language, including version
+      status:
+        $ref: '#/definitions/CompileStatus'
+      cmpErr:
+        type: string
+        description: if present, contains compilation error message
+
+  RunInvoice:
+    type: object
+    description: invoice to create launch program task
+    properties:
+      submissionId:
+        type: string
+        maxLength: 16
+        description: id of compilation task
+      input:
+        type: string
+        description: input to program, which will be written in input.txt file
+      timeLimit:
+        type: integer
+        description: Duration in millis, after which program will be killed
+      memoryLimit:
+        type: integer
+        description: Memory (RAM) limit in bytes. If exceeds, program will be killed
+
+  RunStatus:
+    type: object
+    description: program launch status
+    enum: &RUN_STATUS
+    - OK
+    - RUNTIME_ERROR
+    - SERVER_ERROR
+    - MEMORY_LIMIT
+    - TIME_LIMIT
+
+  RunResult:
+    type: object
+    description: Result of launching program
+    properties:
+      id:
+        type: string
+        maxLength: 16
+      language:
+        $ref: '#/definitions/Language'
+      languageName:
+        type: string
+        description: Full name of code language, including version
+      status:
+        $ref: '#/definitions/RunStatus'
+      input:
+        type: string
+        description: Input to program
+      output:
+        type: string
+        description: Output of program (from stdout or output.txt file)
+      memory:
+        type: integer
+        description: Maximum amount of used memory (not always available)
+      time:
+        type: integer
+        description: Program execution time
+
+  TestInvoice:
+    type: object
+    properties:
+      input:
+        type: string
+        description: Input to program
+      output:
+        type: string
+        description: Expected output of program
+
+  TestInvoiceList:
+    type: array
+    description: List of tests - pair of program input and output
+    items:
+      $ref: '#/definitions/TestInvoice'
+
+
+  Contest:
+    type: object
+    description: invoice to create contest
+    properties:
+      name:
+        type: string
+        maxLength: 30
+      tests:
+        $ref: '#/definitions/TestInvoiceList'
+      timeLimit:
+        type: integer
+        description: Duration in millis, after which program will be killed
+      memoryLimit:
+        type: integer
+        description: Maximum amount of used memory
+
+  SubmissionInvoice:
+    type: object
+    description: Invoice to create submission (run tests)
+    properties:
+      submission:
+        $ref: '#/definitions/CompileInvoice'
+      contestId:
+        type: string
+        maxLength: 16
+        description: ID of contest, which will be used to check program
+
+  SubmissionStatus:
+    type: string
+    enum: &SUBMISSION_STATUS
+    - WAITING_IN_QUEUE
+    - COMPILING
+    - COMPILATION_ERROR
+    - RUNNING_TEST-
+    - OK
+    - SERVER_ERROR
+    - RUNTIME_ERROR
+    - TIME_LIMIT
+    - MEMORY_LIMIT
+    - WRONG_ANSWER
+
+  MemoryList:
+    type: array
+    description: Maximum used memory in each test
+    items:
+      type: integer
+
+  TimeList:
+    type: array
+    description: Program execution time in each test
+    items:
+      type: integer
+
+
+  SubmissionResult:
+    type: object
+    description: Result of executing tests
+    properties:
+      status:
+        $ref: '#/definitions/SubmissionStatus'
+      language:
+        $ref: '#/definitions/Language'
+      languageName:
+        type: string
+        maxLength: 30
+        description: |
+          Full name of code language, including version. Returned only if withLang=true
+      testNumber:
+        type: integer
+        description: Number of test, which is executed now
+      cmpErr:
+        type: string
+        description: If present, contains compilation error message
+      memory:
+        $ref: '#/definitions/MemoryList'
+      time:
+        $ref: '#/definitions/TimeList'
+      sourceCode:
+        type: string
+        description: |
+          Code, which is compiled and run. Returned only if parameter withSource=true
+
+
+
+  OperationResult:
+    properties:
+      statusCode:
+        type: integer
+        description: the status code of this operation result
+      description:
+        type: string
+        description: a brief description of this operation result
+    required:
+    - statusCode
+
+  OperationResultWithLanguageInfo:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - type: object
+      properties:
+        content:
+          $ref: '#/definitions/LanguageInfo'
+      required:
+      - content
+
+  OperationResultWithCompileResult:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - type: object
+      properties:
+        content:
+          $ref: '#/definitions/CompileResult'
+      required:
+      - content
+
+  OperationResultWithContest:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - type: object
+      properties:
+        content:
+          $ref: '#/definitions/Contest'
+      required:
+      - content
+
+  OperationResultWithSubmissionResult:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - type: object
+      properties:
+        content:
+          $ref: '#/definitions/SubmissionResult'
+      required:
+      - content
+
+  OperationResultWithRunResult:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - type: object
+      properties:
+        content:
+          $ref: '#/definitions/RunResult'
+      required:
+      - content
+
+  OperationResultWithViolationList:
+    allOf:
+    - $ref: '#/definitions/OperationResult'
+    - properties:
+        content:
+          $ref: '#/definitions/ViolationList'
+
+  ViolationList:
+    type: array
+    items:
+      $ref: '#/definitions/Violation'
+
+  Violation:
+    properties:
+      property:
+        type: string
+      messageKey:
+        type: string
+      messageValue:
+        type: string
+      data:
+        type: object
+responses:
+  Error:
+    description: An occured exception situation
+    schema:
+      $ref: '#/definitions/OperationResult'
