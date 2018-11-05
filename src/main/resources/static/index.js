@@ -48,7 +48,7 @@ compileBtn.click(function () {
         sourceCode: codeSelector.val()
     };
     $.ajax({
-        url: '/compile-submissions/',
+        url: '/compilation/submissions',
         type: 'POST',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
@@ -68,7 +68,7 @@ runBtn.click(function () {
         executionTimeLimit: tlSelector.val()
     };
     $.ajax({
-        url: '/run-submissions/',
+        url: '/run/submissions',
         type: 'POST',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(payload)
@@ -142,7 +142,7 @@ saveTest.click(function () {
         tests: collectTests()
     };
     $.ajax({
-        url: '/contests/',
+        url: '/contests',
         type: 'POST',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(data)
@@ -161,7 +161,7 @@ function collectTests() {
     for (var i = 0; i < inputs.length; i++) {
         var test = {
             input: inputs.get(i).value,
-            expectedOutput: inputs.get(i + 1).value
+            output: inputs.get(i + 1).value
         };
         tests.push(test);
         i++;
@@ -189,7 +189,7 @@ saveSubmission.click(function () {
         }
     };
     $.ajax({
-        url: '/submissions/',
+        url: '/submissions',
         type: 'POST',
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(data)
@@ -231,7 +231,8 @@ function getSubmissionResult(forced) {
         contentType: "application/json; charset=utf-8"
     }).done(function (resp) {
         onDone(submissionResultPB, submissionResultReponse, getSubmissionResultBtn, resp);
-        if (resp.status !== 'RUNNING_TEST' && resp.status !== 'WAITING_IN_QUEUE' && resp.status !== 'COMPILING') {
+        var status = resp.content.status;
+        if (status !== 'RUNNING_TEST' && status !== 'WAITING_IN_QUEUE' && status !== 'COMPILING') {
             clearInterval(updTimer);
         }
     }).fail(function (resp) {

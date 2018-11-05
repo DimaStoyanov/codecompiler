@@ -1,14 +1,14 @@
 {
-  "apiPackage": "ru.tsystems.tchallenge.contest.api.controller",
-  "modelPackage": "ru.tsystems.tchallenge.contest.api.model",
-  "invokerPackage": "ru.tsystems.tchallenge.contest",
+  "apiPackage": "ru.tsystems.tchallenge.codemaster.api.controller",
+  "modelPackage": "ru.tsystems.tchallenge.codemaster.api.model",
+  "invokerPackage": "ru.tsystems.tchallenge.codemaster",
   "components": [
     "models",
     "apis"
   ],
   "additionalProperties": {
     "sourceFolder": ".",
-    "basePackage": "ru.tsystems.tchallenge.contest",
+    "basePackage": "ru.tsystems.tchallenge.codemaster",
     "dateLibrary": "java8",
     "interfaceOnly": true
   }

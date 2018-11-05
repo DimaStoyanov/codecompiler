@@ -1,4 +1,4 @@
-swagger: "2.0"
+swagger: '2.0'
 
 # Section: base API information
 info:
@@ -45,7 +45,7 @@ paths:
         '200':
           description: The requested search result
           schema:
-            $ref: '#/definitions/OperationResultWithLanguageInfo'
+            $ref: '#/definitions/OperationResultWithLanguageInfoList'
         default:
           $ref: '#/responses/Error'
   /compilation/submissions:
@@ -89,7 +89,7 @@ paths:
         '200':
           description: Result of compilation
           schema:
-            $ref: '#/definitions/OperationResultWithLanguageInfo'
+            $ref: '#/definitions/OperationResultWithCompileResult'
         default:
           $ref: '#/responses/Error'
 
@@ -109,7 +109,7 @@ paths:
         '200':
           description: Result of compilation
           schema:
-            $ref: '#/definitions/OperationResultWithCompileResult'
+            $ref: '#/definitions/OperationResultWithRunResult'
         '400':
           description: Expected error
           schema:
@@ -132,7 +132,7 @@ paths:
         '200':
           description: Result of compilation
           schema:
-            $ref: '#/definitions/OperationResultWithCompileResult'
+            $ref: '#/definitions/OperationResultWithRunResult'
         default:
           $ref: '#/responses/Error'
 
@@ -179,7 +179,7 @@ paths:
         '200':
           description: Submission check results
           schema:
-            $ref: '#/definitions/OperationResultWithContest'
+            $ref: '#/definitions/OperationResultWithSubmissionResult'
         '400':
           description: Expected error
           schema:
@@ -198,6 +198,8 @@ paths:
         required: true
         in: path
         type: string
+      - $ref: '#/parameters/WithLang'
+      - $ref: '#/parameters/WithSource'
       responses:
         '200':
           description: Submission check results
@@ -230,6 +232,11 @@ definitions:
         type: string
         description: Additional data about language (some restrictions depending to contest service)
 
+  LanguageInfoList:
+    type: array
+    items:
+        $ref: '#/definitions/LanguageInfo'
+
   CompileInvoice:
     type: object
     description: Invoice to create compile task
@@ -239,6 +246,9 @@ definitions:
       sourceCode:
         type: string
         description: code to compile
+    required:
+    - language
+    - sourceCode
 
   CompileStatus:
     type: string
@@ -246,7 +256,7 @@ definitions:
     enum: &COMPILE_STATUS
     - OK
     - COMPILATION_ERROR
-    - SYSTEM ERROR
+    - SERVER_ERROR
 
   CompileResult:
     type: object
@@ -254,7 +264,7 @@ definitions:
     properties:
       id:
         type: string
-        maxLength: 16
+        maxLength: 32
       language:
         $ref: '#/definitions/Language'
       languageName:
@@ -273,7 +283,7 @@ definitions:
     properties:
       submissionId:
         type: string
-        maxLength: 16
+        maxLength: 32
         description: id of compilation task
       input:
         type: string
@@ -284,6 +294,8 @@ definitions:
       memoryLimit:
         type: integer
         description: Memory (RAM) limit in bytes. If exceeds, program will be killed
+    required:
+    - submissionId
 
   RunStatus:
     type: object
@@ -301,7 +313,7 @@ definitions:
     properties:
       id:
         type: string
-        maxLength: 16
+        maxLength: 32
       language:
         $ref: '#/definitions/Language'
       languageName:
@@ -315,9 +327,9 @@ definitions:
       output:
         type: string
         description: Output of program (from stdout or output.txt file)
-      memory:
-        type: integer
-        description: Maximum amount of used memory (not always available)
+      stderr:
+        type: string
+        description: Standart error output of program
       time:
         type: integer
         description: Program execution time
@@ -331,6 +343,10 @@ definitions:
       output:
         type: string
         description: Expected output of program
+    required:
+    - input
+    - output
+
 
   TestInvoiceList:
     type: array
@@ -343,6 +359,10 @@ definitions:
     type: object
     description: invoice to create contest
     properties:
+      id:
+        type: string
+        maxLength: 32
+        description: The ID of contest
       name:
         type: string
         maxLength: 30
@@ -354,6 +374,9 @@ definitions:
       memoryLimit:
         type: integer
         description: Maximum amount of used memory
+    required:
+    - name
+    - tests
 
   SubmissionInvoice:
     type: object
@@ -363,8 +386,11 @@ definitions:
         $ref: '#/definitions/CompileInvoice'
       contestId:
         type: string
-        maxLength: 16
+        maxLength: 32
         description: ID of contest, which will be used to check program
+    required:
+    - submission
+    - contestId
 
   SubmissionStatus:
     type: string
@@ -372,19 +398,13 @@ definitions:
     - WAITING_IN_QUEUE
     - COMPILING
     - COMPILATION_ERROR
-    - RUNNING_TEST-
+    - RUNNING_TEST
     - OK
     - SERVER_ERROR
     - RUNTIME_ERROR
     - TIME_LIMIT
     - MEMORY_LIMIT
     - WRONG_ANSWER
-
-  MemoryList:
-    type: array
-    description: Maximum used memory in each test
-    items:
-      type: integer
 
   TimeList:
     type: array
@@ -397,6 +417,10 @@ definitions:
     type: object
     description: Result of executing tests
     properties:
+      id:
+        type: string
+        description: The ID of submission
+        maxLength: 32
       status:
         $ref: '#/definitions/SubmissionStatus'
       language:
@@ -412,8 +436,6 @@ definitions:
       cmpErr:
         type: string
         description: If present, contains compilation error message
-      memory:
-        $ref: '#/definitions/MemoryList'
       time:
         $ref: '#/definitions/TimeList'
       sourceCode:
@@ -434,13 +456,13 @@ definitions:
     required:
     - statusCode
 
-  OperationResultWithLanguageInfo:
+  OperationResultWithLanguageInfoList:
     allOf:
     - $ref: '#/definitions/OperationResult'
     - type: object
       properties:
         content:
-          $ref: '#/definitions/LanguageInfo'
+          $ref: '#/definitions/LanguageInfoList'
       required:
       - content
 
@@ -506,6 +528,20 @@ definitions:
         type: string
       data:
         type: object
+
+parameters:
+  WithLang:
+    description: |
+      Wherer to include to response or not info about language, used to compile/run program
+    name: withLang
+    in: query
+    type: boolean
+  WithSource:
+    description: Whether to include to response or not source code
+    name: withSource
+    in: query
+    type: boolean
+
 responses:
   Error:
     description: An occured exception situation
