@@ -32,6 +32,7 @@ Rest service for compile&run code
     Open Docker Settings -> General -> check `Expose daemon on tcp://localhost:2375 without TLS`
 
 ### API
+Swagger definition localed in `src/main/resources/swagger/api.yaml`  
 You can try using api with Swagger UI.   
 Just run server and visit `localhost:8080/swagger-ui.html`
 
@@ -43,7 +44,7 @@ Or you can find simple UI for that api on `localhost:8080/`
 
 1. Create compile task
     ```
-       curl -X POST "http://localhost:8080/compile-submissions/" 
+       curl -X POST "http://localhost:8080/compilation/submissions" 
         -H "accept: */*" -H "Content-Type: application/json" 
          -d "{ 
                 \"language\": \"JAVA\", 
@@ -52,27 +53,35 @@ Or you can find simple UI for that api on `localhost:8080/`
     ```
     ```
     {
-      "id": "5bba8f42ea22b3211ccb0174",
-      "language": "JAVA",
-      "languageName": "Java 8u171",
-      "status": "OK",
-      "cmpErr": ""
+        "statusCode": 101,
+        "description": "New data has been successfully created and persisted",
+        "content": {
+            "id": "5be0916f156f6a093cfbcff9",
+            "language": "JAVA",
+            "languageName": "Java 11.0.1",
+            "status": "OK",
+            "cmpErr": ""
+        }
     }
     ```
 2. Run code (using id from previous step)  
     ```
-    curl -X POST "http://localhost:8080/submissions/?submissionId=5bba8f42ea22b3211ccb0174" -H "accept: */*"
-    ```    
+    curl -X POST "http://localhost:8080/run/submissions?submissionId=5bba8f42ea22b3211ccb0174" -H "accept: */*"
+    ``` 
+       
     ```
     {
-      "id": "5bba9011ea22b3211ccb0175",
-      "language": "JAVA",
-      "languageName": "Java 8u171",
-      "status": "OK",
-      "input": null,
-      "output": "123\n",
-      "stderr": "",
-      "memory": null,
-      "time": null
+        "statusCode": 101,
+        "description": "New data has been successfully created and persisted",
+        "content": {
+            "id": "5be09462156f6a169894f15e",
+            "language": "JAVA",
+            "languageName": "Java 11.0.1",
+            "status": "OK",
+            "input": null,
+            "output": "123\n",
+            "stderr": "",
+            "time": 578
+        }
     }
     ```
