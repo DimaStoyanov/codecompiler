@@ -22,7 +22,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java-library'
 
-group = 'tsystems.tcahllenge.contest'
+group = 'tsystems.tcahllenge.codemaster'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.10
 
@@ -36,6 +36,7 @@ repositories {
 ext {
     mapstructVersion = "1.2.0.Final"
     lombokVersion = "1.18.2"
+    generatedDir = 'build/generated-sources'
 }
 
 
@@ -65,15 +66,35 @@ dependencies {
 }
 
 swaggerSources {
-    contest {
+    codemaster {
         inputFile = file('src/main/resources/swagger/api.yaml')
         code {
-            outputDir = file('build/generated-sources')
+            outputDir = file(generatedDir)
             configFile = file('src/main/resources/swagger/config.json')
             language = 'spring'
         }
     }
+
 }
 
-compileJava.dependsOn swaggerSources.contest.code
-sourceSets.main.java.srcDir "${swaggerSources.contest.code.outputDir}"
+
+task removeSwaggerTrash {
+    doLast {
+        def generatedDir = file(generatedDir)
+        println "Deleting swagger trash from  ${generatedDir}"
+        def remainOnlyContestPackage = {
+            if (it.name != "ru") {
+                println "Deleting ${it.name}"
+                it.delete()
+                it.deleteDir()
+            }
+        }
+        generatedDir.eachFile(remainOnlyContestPackage)
+    }
+}
+
+
+
+removeSwaggerTrash.dependsOn generateSwaggerCode
+compileJava.dependsOn removeSwaggerTrash
+sourceSets.main.java.srcDir "${swaggerSources.codemaster.code.outputDir}"
