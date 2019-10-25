@@ -1,6 +1,6 @@
 package ru.tsystems.tchallenge.codemaster.utils.component;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.tsystems.tchallenge.codemaster.api.model.Violation;
 import ru.tsystems.tchallenge.codemaster.api.model.ViolationList;
@@ -12,7 +12,7 @@ import ru.tsystems.tchallenge.codemaster.service.ErrorMessageService;
 /**
  * Generic component implementation.
  */
-@Log4j2
+@Slf4j
 public abstract class GenericComponent {
 
     @Autowired
