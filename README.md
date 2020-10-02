@@ -5,7 +5,7 @@ Rest service for compile&run code
 - Mongo DB 
 - Docker
 
-### Technologies
+### Technologies:
 - Java 10
 - Gradle
 - Spring Boot 2.5
