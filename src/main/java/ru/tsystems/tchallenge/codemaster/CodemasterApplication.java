@@ -8,6 +8,5 @@ public class CodemasterApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(CodemasterApplication.class, args);
-
     }
 }
